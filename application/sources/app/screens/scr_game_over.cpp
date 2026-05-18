@@ -4,7 +4,8 @@
 /*****************************************************************************/
 /* Variable Declaration - game over */
 /*****************************************************************************/
-ar_game_score_t gamescore;
+// gamescore is defined centrally in app_stubs.cpp
+extern ar_game_score_t gamescore;
 
 /*****************************************************************************/
 /* View - game over */
@@ -107,8 +108,7 @@ void scr_game_over_handle(ak_msg_t* msg) {
 		APP_DBG_SIG("AC_DISPLAY_BUTTON_MODE_RELEASED\n");
 		// Save score and go Menu game
 		ar_game_score_write(&gamescore);
-		ar_game_score = 10;
-		SCREEN_TRAN(scr_menu_game_handle, &scr_menu_game);
+		SCREEN_TRAN(scr_idle_handle, &scr_idle);
 		BUZZER_PlaySound(BUZZER_SOUND_CLICK);
 	} break;
 
@@ -116,7 +116,6 @@ void scr_game_over_handle(ak_msg_t* msg) {
 		APP_DBG_SIG("AC_DISPLAY_BUTTON_UP_RELEASED\n");
 		// Save score and go Charts
 		ar_game_score_write(&gamescore);
-		ar_game_score = 10;
 		SCREEN_TRAN(scr_charts_game_handle, &scr_charts_game );
 		BUZZER_PlaySound(BUZZER_SOUND_CLICK);
 	} break;
@@ -125,8 +124,7 @@ void scr_game_over_handle(ak_msg_t* msg) {
 		APP_DBG_SIG("AC_DISPLAY_BUTTON_DOWN_RELEASED\n");
 		// Save score and restart game
 		ar_game_score_write(&gamescore);
-		ar_game_score = 10;
-		SCREEN_TRAN(scr_archery_game_handle, &scr_archery_game );
+		SCREEN_TRAN(scr_dino_run_handle, &scr_dino_run );
 		BUZZER_PlaySound(BUZZER_SOUND_CLICK);
 	} break;
 

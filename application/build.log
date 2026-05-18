@@ -1,0 +1,104 @@
+"~" CREATE build_archery-game folder
+"~" CC build_archery-game/fsm.o
+"~" CC build_archery-game/tsm.o
+"~" CC build_archery-game/task.o
+"~" CC build_archery-game/timer.o
+"~" CC build_archery-game/message.o
+"~" CC build_archery-game/log_queue.o
+"~" CC build_archery-game/fifo.o
+"~" CC build_archery-game/ring_buffer.o
+"~" CC build_archery-game/utils.o
+"~" CC build_archery-game/xprintf.o
+"~" CC build_archery-game/cmd_line.o
+"~" CC build_archery-game/button.o
+"~" CC build_archery-game/flash.o
+"~" CC build_archery-game/led.o
+"~" CC build_archery-game/gpio_output.o
+"~" CC build_archery-game/buzzer.o
+"~" CC build_archery-game/buzzer_music.o
+"~" CC build_archery-game/sys_dbg.o
+"~" CC build_archery-game/sys_boot.o
+"~" CC build_archery-game/stm32l1xx_gpio.o
+"~" CC build_archery-game/stm32l1xx_rcc.o
+"~" CC build_archery-game/stm32l1xx_usart.o
+"~" CC build_archery-game/stm32l1xx_spi.o
+"~" CC build_archery-game/misc.o
+"~" CC build_archery-game/stm32l1xx_exti.o
+"~" CC build_archery-game/stm32l1xx_syscfg.o
+"~" CC build_archery-game/stm32l1xx_tim.o
+"~" CC build_archery-game/stm32l1xx_adc.o
+"~" CC build_archery-game/stm32l1xx_rtc.o
+"~" CC build_archery-game/stm32l1xx_pwr.o
+"~" CC build_archery-game/stm32l1xx_flash.o
+"~" CC build_archery-game/stm32l1xx_iwdg.o
+"~" CC build_archery-game/stm32l1xx_comp.o
+"~" CC build_archery-game/stm32l1xx_dac.o
+"~" CC build_archery-game/stm32l1xx_i2c.o
+"~" CC build_archery-game/dtostrf.o
+"~" CC build_archery-game/hooks.o
+"~" CC build_archery-game/platform.o
+"~" CC build_archery-game/system.o
+"~" CC build_archery-game/sys_cfg.o
+"~" CC build_archery-game/io_cfg.o
+"~" CC build_archery-game/system_stm32l1xx.o
+"~" CXX build_archery-game/scr_idle.o
+"~" CXX build_archery-game/scr_startup.o
+"~" CXX build_archery-game/scr_game_over.o
+"~" CXX build_archery-game/scr_charts_game.o
+"~" CXX build_archery-game/screens_bitmap.o
+"~" CXX build_archery-game/scr_dino_run.o
+sources/app/screens/scr_dino_run.cpp: In function 'void dino_run_update()':
+sources/app/screens/scr_dino_run.cpp:193:29: warning: comparison of integer expressions of different signedness: 'uint32_t' {aka 'long unsigned int'} and 'int32_t' {aka 'long int'} [-Wsign-compare]
+  193 |         if (jump_elapsed_ms <= dino_jump_duration_ms) {
+      |             ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+"~" CXX build_archery-game/scr_menu_game.o
+"~" CXX build_archery-game/scr_game_setting.o
+"~" CXX build_archery-game/task_system.o
+"~" CXX build_archery-game/app_eeprom.o
+"~" CXX build_archery-game/app.o
+"~" CXX build_archery-game/app_data.o
+"~" CXX build_archery-game/app_non_clear_ram.o
+"~" CXX build_archery-game/app_bsp.o
+sources/app/app_bsp.cpp: In function 'void btn_mode_callback(void*)':
+sources/app/app_bsp.cpp:34:7: error: 'ar_game_state' was not declared in this scope; did you mean 'ar_game_score_t'?
+   34 |   if (ar_game_state != GAME_OFF) {
+      |       ^~~~~~~~~~~~~
+      |       ar_game_score_t
+sources/app/app_bsp.cpp:34:24: error: 'GAME_OFF' was not declared in this scope
+   34 |   if (ar_game_state != GAME_OFF) {
+      |                        ^~~~~~~~
+sources/app/app_bsp.cpp:44:7: error: 'TIMER_ONE_SHOT' was not declared in this scope
+   44 |       TIMER_ONE_SHOT);
+      |       ^~~~~~~~~~~~~~
+sources/app/app_bsp.cpp:41:4: error: 'timer_set' was not declared in this scope
+   41 |    timer_set( AC_TASK_DISPLAY_ID, \
+      |    ^~~~~~~~~
+sources/app/app_bsp.cpp: In function 'void btn_up_callback(void*)':
+sources/app/app_bsp.cpp:71:7: error: 'ar_game_state' was not declared in this scope; did you mean 'ar_game_score_t'?
+   71 |   if (ar_game_state != GAME_OFF) {
+      |       ^~~~~~~~~~~~~
+      |       ar_game_score_t
+sources/app/app_bsp.cpp:71:24: error: 'GAME_OFF' was not declared in this scope
+   71 |   if (ar_game_state != GAME_OFF) {
+      |                        ^~~~~~~~
+sources/app/app_bsp.cpp:80:7: error: 'TIMER_ONE_SHOT' was not declared in this scope
+   80 |       TIMER_ONE_SHOT);
+      |       ^~~~~~~~~~~~~~
+sources/app/app_bsp.cpp:77:4: error: 'timer_set' was not declared in this scope
+   77 |    timer_set( AC_TASK_DISPLAY_ID, \
+      |    ^~~~~~~~~
+sources/app/app_bsp.cpp: In function 'void btn_down_callback(void*)':
+sources/app/app_bsp.cpp:105:7: error: 'ar_game_state' was not declared in this scope; did you mean 'ar_game_score_t'?
+  105 |   if (ar_game_state != GAME_OFF) {
+      |       ^~~~~~~~~~~~~
+      |       ar_game_score_t
+sources/app/app_bsp.cpp:105:24: error: 'GAME_OFF' was not declared in this scope
+  105 |   if (ar_game_state != GAME_OFF) {
+      |                        ^~~~~~~~
+sources/app/app_bsp.cpp:114:7: error: 'TIMER_ONE_SHOT' was not declared in this scope
+  114 |       TIMER_ONE_SHOT);
+      |       ^~~~~~~~~~~~~~
+sources/app/app_bsp.cpp:111:4: error: 'timer_set' was not declared in this scope
+  111 |    timer_set( AC_TASK_DISPLAY_ID, \
+      |    ^~~~~~~~~
+make: *** [Makefile:240: build_archery-game/app_bsp.o] Error 1

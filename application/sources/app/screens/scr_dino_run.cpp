@@ -371,7 +371,7 @@ void scr_dino_run_handle(ak_msg_t* msg) {
     case AC_DISPLAY_BUTTON_MODE_RELEASED: {
         timer_remove_attr(AC_TASK_DISPLAY_ID, DINO_RUN_TICK_SIG);
         timer_remove_attr(AC_TASK_DISPLAY_ID, DINO_RUN_OBSTACLE_SPAWN_SIG);
-        SCREEN_TRAN(scr_menu_game_handle, &scr_menu_game);
+        SCREEN_TRAN(scr_idle_handle, &scr_idle);
         BUZZER_PlaySound(BUZZER_SOUND_CLICK);
     } break;
 

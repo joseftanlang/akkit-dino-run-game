@@ -1,4 +1,3 @@
-include sources/app/game/Makefile.mk
 include sources/app/screens/Makefile.mk
 
 CFLAGS		+= -I./sources/app
@@ -23,3 +22,4 @@ SOURCES_CPP += sources/app/task_display.cpp
 
 SOURCES_CPP += sources/app/task_if.cpp
 SOURCES_CPP += sources/app/task_uart_if.cpp
+SOURCES_CPP += sources/app/app_stubs.cpp

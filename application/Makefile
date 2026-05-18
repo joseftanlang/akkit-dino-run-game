@@ -21,9 +21,9 @@ FLASH_BASE_ADDR_VAL = 0x08000000
 NAME_MODULE = archery-game
 PROJECT = $(NAME_MODULE)
 
-GCC_PATH		= /home/josef/Downloads/gcc-arm-none-eabi-10.3-2021.10-x86_64-linux/gcc-arm-none-eabi-10.3-2021.10
-PROGRAMER_PATH		= /home/josef/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
-OPENOCD_CFG_PATH	= /usr/local/share/openocd/scripts/board/stm32ldiscovery.cfg
+GCC_PATH		= C:/gcc-arm-none-eabi-10.3-2021.10/bin
+PROGRAMER_PATH		= C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
+OPENOCD_CFG_PATH	= C:/Program Files/OpenOCD/share/openocd/scripts/board/stm32ldiscovery.cfg
 
 # App start address, that need sync with declare in linker file and interrupt vector table.
 APP_START_ADDR_VAL = 0x08003000
@@ -69,40 +69,40 @@ OBJECTS_DIR = build_$(NAME_MODULE)
 TARGET = $(OBJECTS_DIR)/$(NAME_MODULE).axf
 
 SOURCES		+=
-SOURCES_	 = $(shell find $(SOURCES) -type f -printf "%f\n")
+SOURCES_	 = $(notdir $(SOURCES))
 OBJECTS		+= $(patsubst %.c, $(OBJECTS_DIR)/%.o, $(SOURCES_))
 
 SOURCES_CPP	+=
-SOURCES_CPP_	 = $(shell find $(SOURCES_CPP) -type f -printf "%f\n")
+SOURCES_CPP_	 = $(notdir $(SOURCES_CPP))
 OBJECTS		+= $(patsubst %.cpp, $(OBJECTS_DIR)/%.o, $(SOURCES_CPP_))
 
 SOURCES_ASM	+=
-SOURCES_ASM_	 = $(shell find $(SOURCES_ASM) -type f -printf "%f\n")
+SOURCES_ASM_	 = $(notdir $(SOURCES_ASM))
 OBJECTS		+= $(patsubst %.s, $(OBJECTS_DIR)/%.o, $(SOURCES_ASM_))
 
-LIBC		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libc.a
-LIBM		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libm.a
-LIBFPU		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libg.a
-LIBRDPMON	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/librdpmon.a
-LIBSTDCPP_NANO	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libstdc++_nano.a
+LIBC		= $(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a
+LIBM		= $(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp/libm.a
+LIBFPU		= $(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp/libg.a
+LIBRDPMON	= $(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp/librdpmon.a
+LIBSTDCPP_NANO	= $(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp/libstdc++_nano.a
 
-LIBGCC		= $(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcc.a
-LIBGCOV		= $(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcov.a
+LIBGCC		= $(GCC_PATH)/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcc.a
+LIBGCOV		= $(GCC_PATH)/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcov.a
 
-LIB_PATH += -L$(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp
-LIB_PATH += -L$(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp
+LIB_PATH += -L$(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp
+LIB_PATH += -L$(GCC_PATH)/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp
 
 # The command for calling the compiler.
-CC		=	$(GCC_PATH)/bin/arm-none-eabi-gcc
-CPP		=	$(GCC_PATH)/bin/arm-none-eabi-g++
-AR		=	$(GCC_PATH)/bin/arm-none-eabi-ar
-AS		=	$(GCC_PATH)/bin/arm-none-eabi-gcc -x assembler-with-cpp
-LD		=	$(GCC_PATH)/bin/arm-none-eabi-ld
-OBJCOPY		=	$(GCC_PATH)/bin/arm-none-eabi-objcopy
-OBJDUMP		=	$(GCC_PATH)/bin/arm-none-eabi-objdump
-OBJNM		=	$(GCC_PATH)/bin/arm-none-eabi-nm
-ARM_GDB		=	$(GCC_PATH)/bin/arm-none-eabi-gdb-py
-ARM_SIZE	=	$(GCC_PATH)/bin/arm-none-eabi-size
+CC		=	$(GCC_PATH)/arm-none-eabi-gcc
+CPP		=	$(GCC_PATH)/arm-none-eabi-g++
+AR		=	$(GCC_PATH)/arm-none-eabi-ar
+AS		=	$(GCC_PATH)/arm-none-eabi-gcc -x assembler-with-cpp
+LD		=	$(GCC_PATH)/arm-none-eabi-ld
+OBJCOPY		=	$(GCC_PATH)/arm-none-eabi-objcopy
+OBJDUMP		=	$(GCC_PATH)/arm-none-eabi-objdump
+OBJNM		=	$(GCC_PATH)/arm-none-eabi-nm
+ARM_GDB		=	$(GCC_PATH)/arm-none-eabi-gdb-py
+ARM_SIZE	=	$(GCC_PATH)/arm-none-eabi-size
 
 MEMORY_USAGE_BAR_WIDTH = 30
 FLASH_SECTION_FILTER = $$1==".isr_vector" || $$1==".text" || $$1==".ARM.exidx" || $$1==".init_array" || $$1==".fini_array" || $$1==".data"
@@ -211,19 +211,20 @@ CPPFLAGS +=				\
 # linker flags
 LDFLAGS	=	-Map=$(OBJECTS_DIR)/$(PROJECT).map	\
 		--gc-sections	\
-		$(LIB_PATH)	\
-		$(LIBC) $(LIBM) $(LIBSTDCPP_NANO) $(LIBGCC) $(LIBGCOV) $(LIBFPU) $(LIBRDPMON)
+		$(LIB_PATH)
+
+LDLIBS	=	$(LIBC) $(LIBM) $(LIBSTDCPP_NANO) $(LIBGCC) $(LIBGCOV) $(LIBFPU) $(LIBRDPMON)
 
 all: create $(TARGET)
 	@$(MAKE) --no-print-directory info
 
 create:
 	$(Print) CREATE $(OBJECTS_DIR) folder
-	@mkdir -p $(OBJECTS_DIR)
+	@if not exist $(OBJECTS_DIR) mkdir $(OBJECTS_DIR)
 
-$(TARGET): $(OBJECTS) $(LIBC) $(LIBM) $(LIBSTDCPP_NANO) $(LIBGCC) $(LIBGCOV) $(LIBFPU) $(LIBRDPMON)
+$(TARGET): $(OBJECTS)
 	$(Print) LD $@
-	@$(LD) --entry reset_handler -T $(LDFILE) $(LDFLAGS) -o $(@) $(^)
+	@$(LD) --entry reset_handler -T $(LDFILE) $(LDFLAGS) -o $(@) $(OBJECTS) $(LDLIBS)
 	$(Print) OBJCOPY $(@:.axf=.bin)
 	@$(OBJCOPY) -O binary $(@) $(@:.axf=.bin)
 	@$(OBJCOPY) -O binary $(@) $(@:.axf=.out)
@@ -262,7 +263,7 @@ flash: all
 ifdef dev
 	ak-flash $(dev) $(TARGET:.axf=.bin) $(APP_START_ADDR_VAL)
 else
-	$(PROGRAMER_PATH)/STM32_Programmer.sh -c port=SWD -w $(TARGET:.axf=.bin) $(APP_START_ADDR_VAL) -rst
+	"$(PROGRAMER_PATH)/STM32_Programmer_CLI.exe" -c port=SWD -w "$(TARGET:.axf=.bin)" $(APP_START_ADDR_VAL) -rst
 endif
 
 .PHONY: com
@@ -290,10 +291,17 @@ clean:
 	@rm -rf $(OBJECTS_DIR)
 
 .PHONY: info
+ifeq ($(OS),Windows_NT)
+info: $(TARGET)
+	@echo "Memory usage info for $(TARGET):"
+	@$(ARM_SIZE) -A -d $(TARGET)
+	@echo "Detailed section percentage view is available when running make under a POSIX shell (Git Bash/MSYS)."
+else
 info: $(TARGET)
 	@echo "Memory usage info for $(TARGET):"
 	@$(MEMORY_INFO_COLLECT); \
 	$(MEMORY_INFO_PRINT)
+endif
 
 asm: $(TARGET)
 	$(Print) disassemble-all $(<:.axf=.asm)

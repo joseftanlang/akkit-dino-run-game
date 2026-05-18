@@ -1,142 +1,143 @@
-# Archery Game - Build on AK Embedded Base Kit
+# AKKit Dino Run Game — Detailed README
 
-<center><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/epcb_archery_game.webp" alt="epcb archery game" width="100%"/></center>
+![](resources/images/AK_Embedded_Base_Kit_STM32L151.webp)
 
-<hr>
+Overview
+--------
+This repository contains the AK Embedded Base Kit game port and sources for a small, event-driven microcontroller game originally based on the AK embedded examples. The playable title in this workspace is the "Dino Run" screen (an adapted runner game) that runs on the AK Embedded Base Kit (STM32L151 MCU + OLED 1.3" display, buttons and buzzer).
 
+This README provides:
+- A clear summary of the game and objective.
+- How to build, flash and run on the hardware.
+- Systematic descriptions of the repository layout and the purpose of key files and folders (a practical, maintainable map rather than listing every generated/third-party file).
 
-<div align="center">
-    <video src="https://github.com/ak-embedded-software/archery-game/assets/54855481/d493703c-bf5b-4fd2-ae04-b86784a01231" alt="epcb archery game" height=200/>
-</div>
+Game summary and objective
+-------------------------
+- Objective: survive as long as possible while avoiding obstacles and collecting points. The game ends when the dino collides with an obstacle (game over).
+- Controls: use the kit buttons to jump, duck or switch screens depending on the configured button mapping in `application/sources/app/app_bsp.cpp` and the `button` driver.
+- Scoring: the game increments score over time and/or when the player avoids obstacles, and high-scores are saved to EEPROM/Flash.
 
+Quick start (build & flash)
+--------------------------
+1. Prepare toolchain for ARM Cortex-M (GCC/ARM) and make sure `arm-none-eabi-*` tools are on your PATH.
+2. From the repository root run:
 
-<hr>
+```bash
+cd application
+make all
+```
 
-## I. Giới thiệu
+3. The `application/build_*.axf` (or `.bin`) artifacts are produced in `application/build_*` folders. Use your preferred flashing tool (ST-LINK, OpenOCD, or vendor tool) to flash `resources/bin/ak-base-kit-stm32l151-application.bin` or the build output.
 
-Archery game là một tựa game chạy trên AK Embedded Base Kit. Được xây dựng nhằm mục đích giúp các bạn có đam mê về lập trình nhúng có thể tìm hiểu và thực hành về lập trình event-driven. Trong quá trình xây dựng nên archery game, các bạn sẽ hiểu thêm về cách thiết kế và ứng dụng UML, Task, Signal, Timer, Message, State-machine,... 
+Notes:
+- The `boot` folder contains a small bootloader and its build system. If you are using the provided binaries in `resources/bin`, flashing just the application image is usually sufficient.
 
-### 1.1 Phần cứng
+Repository structure (high-level)
+--------------------------------
+- `application/` — application build scripts and all game-related source code.
+    - `Makefile` — top-level application build rules. Build here to produce the application binary.
+    - `sources/` — C/C++ source code for the game, drivers, screens and app logic.
+        - `app/` — core application files and screens (game state, settings, gamescreen implementations).
+            - `screens/` — each screen (menu, game, charts, settings, game over) lives here. Key files:
+                - [application/sources/app/screens/scr_dino_run.cpp](application/sources/app/screens/scr_dino_run.cpp): main Dino Run game screen and game loop.
+                - [application/sources/app/screens/scr_menu_game.cpp](application/sources/app/screens/scr_menu_game.cpp): menu handling and navigation.
+                - [application/sources/app/screens/scr_game_over.cpp](application/sources/app/screens/scr_game_over.cpp): game over screen and options.
+                - [application/sources/app/screens/scr_game_setting.cpp](application/sources/app/screens/scr_game_setting.cpp): settings screen.
+        - `driver/` — hardware drivers and glue code.
+            - [application/sources/driver/Adafruit_oled_drv/Adafruit_oled_drv.cpp](application/sources/driver/Adafruit_oled_drv/Adafruit_oled_drv.cpp): OLED display driver used by the game renderer.
+            - [application/sources/driver/button/button.c](application/sources/driver/button/button.c): button driver used to read user input.
+            - `buzzer`, `led`, `flash`, `eeprom` drivers: handle audio feedback and persistent storage.
+        - `common/` — helpers and common functionality (view rendering, screen manager, utils):
+            - [application/sources/common/view_render.cpp](application/sources/common/view_render.cpp)
+            - [application/sources/common/screen_manager.cpp](application/sources/common/screen_manager.cpp)
 
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/AK_Embedded_Base_Kit_STM32L151.webp" alt="AK Embedded Base Kit - STM32L151" width="480"/></p>
-<p align="center"><strong><em>Hình 1:</em></strong> AK Embedded Base Kit - STM32L151</p>
+- `boot/` — bootloader sources and build system. Contains platform/STM32L startup files, linker scripts, and vendor CMSIS/driver code.
+    - `stm32l_init.gdb` and other debug helpers live here for early-stage bring-up.
 
-[AK Embedded Base Kit](https://epcb.vn/products/ak-embedded-base-kit-lap-trinh-nhung-vi-dieu-khien-mcu) là một evaluation kit dành cho các bạn học phần mềm nhúng nâng cao.
+- `resources/` — assets and prebuilt binaries.
+    - `resources/images/bitmap/` — collection of small PNG bitmaps used to produce microcontroller bitmaps for the OLED (dino, cacti, obstacles, icons).
+    - `resources/bin/` — prebuilt `boot.bin` and `application.bin` images (ready to flash).
 
-KIT tích hợp LCD **OLED 1.3", 3 nút nhấn, và 1 loa Buzzer phát nhạc**, với các trang bị này thì đã đủ để học hệ thống event-driven thông qua thực hành thiết kế máy chơi game.
+- `LICENSE` — project license.
 
-KIT cũng tích hợp **RS485**, **NRF24L01+**, và **Flash** lên đến 32MB, thích hợp cho prototype các ứng dụng thực tế trong hệ thống nhúng hay sử dụng như: truyền thông có dây, không dây wireless, các ứng dụng lưu trữ data logger,...
+Important files and what they do (systematic reference)
+-----------------------------------------------------
+This section lists the most relevant files and their responsibilities. For large vendor/third-party libraries (CMSIS, StdPeriph), we describe purpose rather than repeat every file.
 
-### 1.2 Mô tả trò chơi và đối tượng
-Phần mô tả sau đây về **“Archery game”** , giải thích cách chơi và cơ chế xử lý của trò chơi. Tài liệu này dùng để tham khảo thiết kế và phát triển trò chơi về sau.
+- `application/Makefile` — orchestrates the build of the application image. Edit only if you change build paths or toolchain options.
+- `boot/Makefile` — bootloader build rules.
+- `application/sources/app/app.cpp` and `application/sources/app/app.h` — application entry, initialization and main task registration.
+- `application/sources/app/app_bsp.cpp`, `app_bsp.h` — board support package: maps buttons, buzzer and display initialization to hardware-specific pins.
+- `application/sources/app/app_data.cpp`, `app_data.h` — persistent storage, high score save/load helpers (wrapping eeprom/flash driver).
+- `application/sources/app/screens/scr_dino_run.cpp` — the Dino Run gameplay implementation. Contains:
+    - initialization of game objects (player, obstacles), timer-driven updates (game tick), collision detection and score update logic.
+    - input handling for jump/duck mapped through button driver messages.
+- `application/sources/common/view_render.*` — the renderer that draws sprites/bitmaps and text onto the OLED via the Adafruit driver.
+- `application/sources/driver/Adafruit_oled_drv/` — contains `Adafruit_GFX` port and OLED low-level SPI/I2C code.
+- `application/sources/driver/button/button.c` and `boot/sources/driver/button/button.c` — debounce and event generation from physical buttons; the application listens for signals/messages generated by these drivers.
+- `application/sources/driver/eeprom/` and `boot/sources/driver/flash/` — drivers for non-volatile storage where high-scores and settings are saved.
 
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/menu_game.webp" alt="menu game" width="480"/></p>
-<p align="center"><strong><em>Hình 2:</em></strong> Menu game</p>
+Assets and bitmaps
+------------------
+- Source PNGs and small images: `application/sources/app/images/` and `resources/images/bitmap/` contain original sprites (dino, cactus, bird, bullet, icons). Those are the canonical assets. To change visuals, update PNGs and regenerate the corresponding C bitmaps or update the bitmap assembler used in `screens_bitmap.cpp`.
+- `application/sources/app/screens/screens_bitmap.*` — contains compiled bitmap tables (C arrays) used directly by renderer to blit images on the OLED.
 
-Trò chơi bắt đầu bằng màn hình **Menu game** với các lựa chọn sau: 
-- **Archery Game:** Chọn vào để bắt đầu chơi game.
-- **Setting:** Chọn vào để cài đặt các thông số của game.
-- **Charts:** Chọn vào để xem top 3 điểm cao nhất đạt được.
-- **Exit:** Thoát menu vào màn hình chờ.
+Build artifacts and third-party code
+----------------------------------
+- Vendor libraries (CMSIS, StdPeriph) and the Arduino compatibility layer are included under `boot/sources/platform/stm32l` and `application/sources/platform/stm32l/arduino/` to simplify porting and provide required HAL functions. These are not edited for game logic and are present so the project builds out-of-the-box.
+- Many generated/compiled object files and documentation files live under those vendor directories — you can treat them as read-only dependencies.
 
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/objects_in_the_game.webp" alt="archery game play screen" width="600"/></p>
-<p align="center"><strong><em>Hình 3:</em></strong> Màn hình game play và các đối tượng</p>
+How the game is structured (runtime overview)
+-------------------------------------------
+- Event-driven architecture: the code uses a small message/task framework (`application/sources/ak/` and `application/sources/ak/inc`) to pass signals and messages between tasks. The screen manager sends periodic time-tick signals to update objects, while button drivers generate action signals (jump/duck).
+- Main runtime loop (conceptual):
+    1. `app` initializes hardware and registers screens/tasks.
+    2. `screen_manager` activates the current screen (menu, dino run).
+    3. Timer tick signals (every 100ms or configured tick) drive game updates: move obstacles, animate sprite frames, check collisions.
+    4. Input signals modify player state (jump/duck) and may trigger sound effects via the buzzer driver.
+    5. On collision, the border/task signals a reset; score is saved and `scr_game_over` is displayed.
 
-#### 1.2.1 Các đối tượng (Object) trong game:
-|Đối tượng|Tên đối tượng|Mô tả|
-|---|---|---|
-|**Cung tên**|Archery|Di chuyển lên/xuống để chọn vị trí bắn ra mũi tên|
-|**Mũi tên**|Arrow|Bắn ra từ cung tên, dùng để phá hủy thiên thạch|
-|**Vụ nổ**|Bang|Hiệu ứng xuất hiện khi thiên thạch bị phá hủy|
-|**Ranh giới**|Border|Vùng an toàn phải bảo vệ không cho thiên thạch rơi vào|
-|**Thiên thạch**|Meteoroid|Vật thể bay về phía cung tên với tốc độ tăng dần, có khả năng phá hủy ranh giới|
+Editing and extending the game
+-------------------------------
+- To add/modify sprites: update PNGs in `resources/images/bitmap/` or `application/sources/app/images/` and regenerate the bitmap arrays (the project uses `screens_bitmap.cpp` to store arrays — update or add a small conversion script to transform PNG to C arrays if needed).
+- To change game rules (speed, scoring): edit `scr_dino_run.cpp` and the configuration in `app/game_setting` structures (see `scr_game_setting.cpp`).
+- To add new screens: follow the `scr_*` pattern (header + cpp) and register the new screen in `screen_manager` and `screens.h`.
 
-**(*)** Trong phần còn lại của tài liệu sẽ dùng tên của các đối tượng để đề cập đến đối tượng.
+Debugging and testing notes
+---------------------------
+- Use `stm32l_init.gdb` (present in both `application` and `boot`) for GDB debugging and step-through.
+- Logging and debug prints use `app_dbg.h` and `APP_DBG_*` macros — enable them in the build by setting debug flags in the Makefile.
 
-#### 1.2.2 Cách chơi game: 
-- Trong trò chơi này bạn sẽ điều khiển Archery, di chuyển **lên/xuống** bằng hai nút **[Up]/[Down]**, để chọn vị trí **bắn ra** Arrow.
-- Khi nhấn nút **[Mode]** Arrow sẽ được bắn ra, nhằm phá hủy các Meteoroid đang bay đến.
-- Mục tiêu trò chơi là kiếm được càng nhiều điểm càng tốt, trò chơi sẽ kết thúc khi có Meteoroid chạm vào Border.
+Files of interest (quick links)
+------------------------------
+- Application entry: [application/sources/app/app.cpp](application/sources/app/app.cpp)
+- Dino screen: [application/sources/app/screens/scr_dino_run.cpp](application/sources/app/screens/scr_dino_run.cpp)
+- Menu: [application/sources/app/screens/scr_menu_game.cpp](application/sources/app/screens/scr_menu_game.cpp)
+- Game settings: [application/sources/app/screens/scr_game_setting.cpp](application/sources/app/screens/scr_game_setting.cpp)
+- Renderer: [application/sources/common/view_render.cpp](application/sources/common/view_render.cpp)
+- OLED driver: [application/sources/driver/Adafruit_oled_drv/Adafruit_oled_drv.cpp](application/sources/driver/Adafruit_oled_drv/Adafruit_oled_drv.cpp)
+- Buttons: [application/sources/driver/button/button.c](application/sources/driver/button/button.c)
+- EEPROM: [application/sources/driver/eeprom/eeprom.cpp](application/sources/driver/eeprom/eeprom.cpp)
 
-#### 1.2.3 Cơ chế hoạt động:
-- **Cách tính điểm:** Điểm được tính bằng số lượng Meteoroid bị phá hủy. Mỗi Meteoroid bị phá hủy tương ứng với 10 điểm. Số điểm tích lũy được sẽ hiển thị ở góc dưới bên phải màn hình.
-- **Độ khó:** Mỗi khi tích lũy được 200 điểm, tốc độ bay của Meteoroid sẽ tăng lên một cấp độ. Độ khó ban đầu có thể cài đặt trong phần **Setting**.
-- **Giới hạn của Arrow:** Khi bắn thì số lượng Arrow hiện có sẽ giảm đi tương ứng số lượng Arrow đang bay, nếu Arrow hiện có giảm về "0" thì không thể bắn được và sẽ có âm thanh báo. Số lượng Arrow hiện có sẽ được hồi lại khi phá hủy được Meteoroid hoặc Arrow bay hết màn hình game. Số lượng Arrow được hiển thị ở góc dưới bên trái màn hình và có thể thay đổi trong phần **Setting**.
+Contributing
+------------
+- Fork, create a feature branch, and open a pull request. Keep game changes limited to `application/sources/app/` and artwork in `resources/images/` unless you are updating hardware drivers.
 
-- **Animation:** Để trò chơi thêm phần sinh động thì các đối tượng sẽ có thêm hoạt ảnh lúc di chuyển.
-- **Kết thúc trò chơi:** Khi Meteoroid chạm vào Border, trò chơi sẽ kết thúc. Các đối tượng sẽ được reset và số điểm sẽ được lưu. Bạn sẽ vào màn hình “Game Over” với 3 lựa chọn là:
-  - **Restart:** chơi lại.
-  - **Charts:** vào xem bảng xếp hạng.
-  - **Home:** về lại menu game.
+License
+-------
+See [LICENSE](LICENSE) in the repository root.
 
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/game_over.webp" alt="archery game over screen" width="480"/></p>
-<p align="center"><strong><em>Hình 4:</em></strong> Màn hình Game_over</p>
+Acknowledgements
+----------------
+- This project reuses and adapts code and assets from AK Embedded Base Kit examples and vendor libraries (CMSIS, STM32 StdPeriph). Those third-party components keep their original licenses and are included as-vendor code.
 
-## II. Thiết kế - ARCHERY GAME
-**Các khái niệm trong event-driven:**
+If you want, I can:
+- generate a per-file table listing every source file and a one-line description (long output), or
+- add build instructions for specific toolchains (OpenOCD / st-flash / ST-LINK GUI).
 
-- **Event Driven:** Nôn na là một hệ thống gửi thư (gửi message) để thực thi các công việc. Trong đó, Task đóng vai trò là người nhận thư, Signal đại diện cho nội dung công việc. Task & Signal nền tảng của một hệ Event Driven.
-- **Task:** Thông thường mỗi Task sẽ nhận một nhóm công công việc nào nào đó, ví dụ: quản lý state-machine, quản lý hiển thị của màn hình, quản lý việc cập nhật phần mềm, quản lý hệ thống watchdog ... 
-- **Message:** Được chia làm 2 loại chính, Message chỉ chứa Signal, hoặc vừa chứa Signal và Data. Message tương đương với Signal.
-- **Handler:** Chỗ thực thi một công việc nào đó thì gọi là Handler.
+---
+Last updated: May 18, 2026
 
-Chi tiết các khái niệm các bạn tham khảo tại bài viết: [AK Embedded Base Kit - STM32L151 - Event Driven: Task & Signal](https://epcb.vn/blogs/ak-embedded-software/ak-embedded-base-kit-stm32l151-event-driven-task-signal)
-
-### 2.1 Sơ đồ trình tự
-**Sơ đồ trình tự** được sử dụng để mô tả trình tự của các Message và luồng tương tác giữa các đối tượng trong một hệ thống.
-
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/sequence_object/archery_game_UML.webp" alt="archery game UML" width="720"/></p>
-<p align="center"><strong><em>Hình 5:</em></strong> The sequence diagram</p>
-
-### Ghi chú:
-**SCREEN_ENTRY:** Cài đặt các thiết lập ban đầu cho đối tượng trong game.
-- **Level setup:** Thiết lập thông số cấp độ cho game.
-- **AR_GAME_ARCHERY_SETUP:** Thiết lập thông số ban đầu cho đối tượng Archery
-- **AR_GAME_ARROW_SETUP:** Thiết lập thông số ban đầu cho các đối tượng Arrow
-- **AR_GAME_METEOROID_SETUP:** Thiết lập thông số ban đầu cho các đối tượng Meteoroid
-- **AR_GAME_BANG_SETUP:** Thiết lập thông số ban đầu cho các đối tượng Bang
-- **AR_GAME_BORDER_SETUP:** Thiết lập thông số ban đầu cho đối tượng Border
-- **Setup timer - Time tick:** Khởi tạo Timer - Time tick cho game.
-- **STATE (GAME_ON):** Cập nhật trạng thái game -> GAME_ON
-
-**GAME PLAY:** Quá trình hoạt động của game.
-
-**GAME PLAY - Normal:** Game hoạt động ở trạng thái bình thường.
-- **AR_GAME_TIME_TICK:** Signal do Timer - Time tick gửi đến.
-- **AR_GAME_ARCHERY_UPDATE:** Cập nhật trạng thái Archery.
-- **AR_GAME_ARROW_RUN:** Cập nhật di chuyển của các Arrow theo thời gian.
-- **AR_GAME_METEOROID_RUN:** Cập nhật di chuyển của các Meteoroid theo thời gian.
-- **AR_GAME_METEOROID_DETONATOR:** Kiểm tra các Meteoroid có bị Arrow phá hủy.
-- **AR_GAME_BANG_UPDATE:** Cập nhật hoạt ảnh vụ nổ theo thời gian
-- **AR_GAME_BORDER_UPDATE:** Kiểm tra số điểm hiện tại để cập nhật tăng độ khó game.
-- **AR_GAME_CHECK_GAME_OVER:** Kiểm tra Meteoroid chạm vào Border. Nếu chạm vào thì gửi Signal - **AR_GAME_RESET** đến **Screen**.
-
-**GAME PLAY - Action:** Game hoạt động ở trạng thái có tác động của các nút nhấn.
-- **AR_GAME_ARCHERY_UP:** Player nhấn nút **[Up]** điều khiển Archery di chuyển lên.
-- **AR_GAME_ARCHERY_DOWN:** Player nhấn nút **[Down]** điều khiển Archery di chuyển xuống.
-- **AR_GAME_ARROW_SHOOT:** Player nhấn nút **[Mode]** điều khiển Archery bắn Arrow ra.
-
-**RESET GAME:** Quá trình cài đặt lại các thông số trước khi thoát game.
-- **STATE (GAME_OVER):** Cập nhật trạng thái game -> GAME_OVER
-- **AR_GAME_RESET:** Signal cài đặt lại game do Border gửi đến.
-- **AR_GAME_ARCHERY_RESET:** Cài đặt lại đối tượng Archery trước khi thoát.
-- **AR_GAME_ARROW_RESET:** Cài đặt lại đối tượng Arrow trước khi thoát.
-- **AR_GAME_METEOROID_RESET:** Cài đặt lại đối tượng Meteoroid trước khi thoát.
-- **AR_GAME_BANG_RESET:** Cài đặt lại đối tượng Bang trước khi thoát.
-- **AR_GAME_BORDER_RESET:** Cài đặt lại đối tượng Border trước khi thoát.
-- **Save and reset Score:** Lưu số điểm hiện tại và Cài đặt lại.
-- **Timer remove - Timer tick:** Xóa Timer - Time tick
-- **Setup timer - Timer exit:** Tạo 1 timer one shot để thoát game. Nhằm tạo ra một khoảng delay cho người chơi có thể nhận thức được là mình đã game over trước khi chuyển sang màn hình thông báo game over.
-
-**EXIT:** Thoát khỏi game và chuyển sang màn hình Game Over.
-- **AR_GAME_EXIT:** Signal do Timer exit gửi đến.
-- **STATE (GAME_OFF):** Cập nhật trạng thái game -> GAME_OFF
-- **Change the screen - SCREEN_TRAN(scr_game_over_handle, &scr_game_over):** Chuyển màn hình sang màn hình Game Over.
-
-### 2.2 Chi tiết
-
-Sau khi xác định được các đối tượng trong game mà chúng ta cần, tiếp theo chúng ta phải liệt kê ra các thuộc tính, các task, các signal và bitmap mà trong game sẽ sử dụng tới.
-Việc liệt kê càng chi tiết thì việc làm game diễn ra càng nhanh và tạo tình rõ ràng minh bạch cho phần tài nguyên giúp phần code game diễn ra suông sẻ hơn.
 
 #### 2.2.1 Thuộc tính đối tượng
 Việc liệt kê các thuộc tính của đối tượng trong game có các tác dụng quan trọng sau:

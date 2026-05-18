@@ -251,6 +251,15 @@ extern const app_info_t app_info;
 extern void* app_get_boot_share_data();
 extern int  main_app();
 
+/* Minimal game state for compatibility */
+typedef enum {
+	GAME_OFF = 0,
+	GAME_ON = 1
+} ar_game_state_e;
+
+/* current game state (managed elsewhere) */
+extern int ar_game_state;
+
 #ifdef __cplusplus
 }
 #endif

@@ -62,6 +62,9 @@ extern ar_game_setting_t settingdata;
 extern bool ar_game_setting_read(ar_game_setting_t* data);
 extern bool ar_game_setting_write(ar_game_setting_t* data);
 
+/* Backward compatibility: some files use `settingsetup` name */
+#define settingsetup settingdata
+
 #ifdef __cplusplus
 }
 #endif
