@@ -36,7 +36,7 @@ static void view_scr_game_setting() {
     view_render.print(settingdata.silent ? "Off" : "On");
 
     view_render.setCursor(6, 54);
-    view_render.print("Mode=Menu  Up/Down=Change");
+    view_render.print("Up/Down=Change");
     view_render.update();
 }
 

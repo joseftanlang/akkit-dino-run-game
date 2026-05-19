@@ -13,9 +13,9 @@ Print = @echo "~"
 NAME_MODULE = ak-base-kit-stm32l151-boot
 PROJECT = $(NAME_MODULE)
 
-GCC_PATH		= C:/gcc-arm-none-eabi-10.3-2021.10/bin
-PROGRAMER_PATH		= C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
-OPENOCD_CFG_PATH	= C:/Program Files/OpenOCD/share/openocd/scripts/board/stm32ldiscovery.cfg
+GCC_PATH		= /home/josef/Downloads/gcc-arm-none-eabi-10.3-2021.10-x86_64-linux/gcc-arm-none-eabi-10.3-2021.10
+PROGRAMER_PATH		= /home/josef/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
+OPENOCD_CFG_PATH	= /usr/local/share/openocd/scripts/board/stm32ldiscovery.cfg
 
 #Include sources file
 include sources/app/Makefile.mk
@@ -62,36 +62,36 @@ OBJECTS_DIR = build_$(NAME_MODULE)
 TARGET = $(OBJECTS_DIR)/$(NAME_MODULE).axf
 
 SOURCES		+=
-SOURCES_	 = $(notdir $(SOURCES))
+SOURCES_	 = $(shell find $(SOURCES) -type f -printf "%f\n")
 OBJECTS		+= $(patsubst %.c, $(OBJECTS_DIR)/%.o, $(SOURCES_))
 
 SOURCES_CPP	+=
-SOURCES_CPP_	 = $(notdir $(SOURCES_CPP))
+SOURCES_CPP_	 = $(shell find $(SOURCES_CPP) -type f -printf "%f\n")
 OBJECTS		+= $(patsubst %.cpp, $(OBJECTS_DIR)/%.o, $(SOURCES_CPP_))
 
-LIBC		= $(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp/libc.a
-LIBM		= $(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp/libm.a
-LIBFPU		= $(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp/libg.a
-LIBRDPMON	= $(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp/librdpmon.a
-LIBSTDCPP_NANO	= $(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp/libstdc++_nano.a
+LIBC		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libc.a
+LIBM		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libm.a
+LIBFPU		= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libg.a
+LIBRDPMON	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/librdpmon.a
+LIBSTDCPP_NANO	= $(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp/libstdc++_nano.a
 
-LIBGCC		= $(GCC_PATH)/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcc.a
-LIBGCOV		= $(GCC_PATH)/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcov.a
+LIBGCC		= $(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcc.a
+LIBGCOV		= $(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp/libgcov.a
 
-LIB_PATH += -L$(GCC_PATH)/../arm-none-eabi/lib/thumb/v7-m/nofp
-LIB_PATH += -L$(GCC_PATH)/../lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp
+LIB_PATH += -L$(GCC_PATH)/arm-none-eabi/lib/thumb/v7-m/nofp
+LIB_PATH += -L$(GCC_PATH)/lib/gcc/arm-none-eabi/10.3.1/thumb/v7-m/nofp
 
 # The command for calling the compiler.
-CC		=	$(GCC_PATH)/arm-none-eabi-gcc
-CPP		=	$(GCC_PATH)/arm-none-eabi-g++
-AR		=	$(GCC_PATH)/arm-none-eabi-ar
-AS		=	$(GCC_PATH)/arm-none-eabi-gcc -x assembler-with-cpp
-LD		=	$(GCC_PATH)/arm-none-eabi-ld
-OBJCOPY		=	$(GCC_PATH)/arm-none-eabi-objcopy
-OBJDUMP		=	$(GCC_PATH)/arm-none-eabi-objdump
-OBJNM		=	$(GCC_PATH)/arm-none-eabi-nm
-ARM_GDB		=	$(GCC_PATH)/arm-none-eabi-gdb-py
-ARM_SIZE	=	$(GCC_PATH)/arm-none-eabi-size
+CC		=	$(GCC_PATH)/bin/arm-none-eabi-gcc
+CPP		=	$(GCC_PATH)/bin/arm-none-eabi-g++
+AR		=	$(GCC_PATH)/bin/arm-none-eabi-ar
+AS		=	$(GCC_PATH)/bin/arm-none-eabi-gcc -x assembler-with-cpp
+LD		=	$(GCC_PATH)/bin/arm-none-eabi-ld
+OBJCOPY		=	$(GCC_PATH)/bin/arm-none-eabi-objcopy
+OBJDUMP		=	$(GCC_PATH)/bin/arm-none-eabi-objdump
+OBJNM		=	$(GCC_PATH)/bin/arm-none-eabi-nm
+ARM_GDB		=	$(GCC_PATH)/bin/arm-none-eabi-gdb-py
+ARM_SIZE	=	$(GCC_PATH)/bin/arm-none-eabi-size
 
 # Set the compiler CPU/FPU options.
 # https://launchpadlibrarian.net/177524521/readme.txt
@@ -153,19 +153,18 @@ CPPFLAGS += 	$(CPU)			\
 # linker flags
 LDFLAGS	=	-Map=$(OBJECTS_DIR)/$(PROJECT).map	\
 		--gc-sections	\
-		$(LIB_PATH)
-
-LDLIBS	=	$(LIBC) $(LIBM) $(LIBSTDCPP_NANO) $(LIBGCC) $(LIBGCOV) $(LIBFPU) $(LIBRDPMON)
+		$(LIB_PATH)	\
+		$(LIBC) $(LIBM) $(LIBSTDCPP_NANO) $(LIBGCC) $(LIBGCOV) $(LIBFPU) $(LIBRDPMON)
 
 all: create $(TARGET)
 
 create:
 	$(Print) CREATE $(OBJECTS_DIR) folder
-	@if not exist $(OBJECTS_DIR) mkdir $(OBJECTS_DIR)
+	@mkdir -p $(OBJECTS_DIR)
 
-$(TARGET): $(OBJECTS)
+$(TARGET): $(OBJECTS) $(LIBC) $(LIBM) $(LIBSTDCPP_NANO) $(LIBGCC) $(LIBGCOV) $(LIBFPU) $(LIBRDPMON)
 	$(Print) LD $@
-	@$(LD) --entry reset_handler -T $(LDFILE) $(LDFLAGS) -o $(@) $(OBJECTS) $(LDLIBS)
+	@$(LD) --entry reset_handler -T $(LDFILE) $(LDFLAGS) -o $(@) $(^)
 	$(Print) OBJCOPY $(@:.axf=.bin)
 	@$(OBJCOPY) -O binary $(@) $(@:.axf=.bin)
 	@$(OBJCOPY) -O binary $(@) $(@:.axf=.out)
@@ -187,7 +186,7 @@ $(OBJECTS_DIR)/%.o: %.s
 .PHONY: flash
 flash: 	all
 	$(Print) BURNING $(TARGET:.axf=.bin) to target
-	"$(PROGRAMER_PATH)/STM32_Programmer_CLI.exe" -c port=SWD -w "$(TARGET:.axf=.bin)" $(BOOT_START_ADDR_VAL) -rst
+	$(PROGRAMER_PATH)/STM32_Programmer.sh -c port=SWD -w $(TARGET:.axf=.bin) $(BOOT_START_ADDR_VAL) -rst
 
 debug:	all
 	xterm -e openocd -f $(OPENOCD_PATH)/tcl/board/stm32ldiscovery.cfg &

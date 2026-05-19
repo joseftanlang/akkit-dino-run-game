@@ -251,17 +251,27 @@ int boot_main() {
 		 * waiting load application
 		 */
 		APP_PRINT("[BOOT] unexpected status\n");
-#if 0
-		APP_PRINT("[BOOT] start application\n");
-		jump_to_application_before_reset_peripheral();
-#else
-		APP_PRINT("[BOOT] uart boot started\n");
+		firmware_header_t app_fw_header;
+		sys_ctrl_get_firmware_info(&app_fw_header);
 
-		led_blink_set(&led_life, 250, 50);
+		if (app_fw_header.psk == FIRMWARE_PSK && app_fw_header.bin_len != 0) {
+			APP_PRINT("[BOOT] recover app header and start application\n");
+			app_sys_boot.current_fw_app_header = app_fw_header;
+			app_sys_boot.current_fw_app_header.psk = FIRMWARE_PSK;
+			app_sys_boot.fw_app_cmd.cmd = SYS_BOOT_CMD_NONE;
+			sys_boot_set(&app_sys_boot);
 
-		while (1) {
+			APP_PRINT("[BOOT] start application\n");
+			jump_to_application_before_reset_peripheral();
 		}
-#endif
+		else {
+			APP_PRINT("[BOOT] uart boot started\n");
+
+			led_blink_set(&led_life, 250, 50);
+
+			while (1) {
+			}
+		}
 	}
 
 	return 0;

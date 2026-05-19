@@ -1,793 +1,137 @@
-# AKKit Dino Run Game — Detailed README
-
-![](resources/images/AK_Embedded_Base_Kit_STM32L151.webp)
-
-Overview
---------
-This repository contains the AK Embedded Base Kit game port and sources for a small, event-driven microcontroller game originally based on the AK embedded examples. The playable title in this workspace is the "Dino Run" screen (an adapted runner game) that runs on the AK Embedded Base Kit (STM32L151 MCU + OLED 1.3" display, buttons and buzzer).
-
-This README provides:
-- A clear summary of the game and objective.
-- How to build, flash and run on the hardware.
-- Systematic descriptions of the repository layout and the purpose of key files and folders (a practical, maintainable map rather than listing every generated/third-party file).
-
-Game summary and objective
--------------------------
-- Objective: survive as long as possible while avoiding obstacles and collecting points. The game ends when the dino collides with an obstacle (game over).
-- Controls: use the kit buttons to jump, duck or switch screens depending on the configured button mapping in `application/sources/app/app_bsp.cpp` and the `button` driver.
-- Scoring: the game increments score over time and/or when the player avoids obstacles, and high-scores are saved to EEPROM/Flash.
-
-Quick start (build & flash)
---------------------------
-1. Prepare toolchain for ARM Cortex-M (GCC/ARM) and make sure `arm-none-eabi-*` tools are on your PATH.
-2. From the repository root run:
-
-```bash
-cd application
-make all
-```
-
-3. The `application/build_*.axf` (or `.bin`) artifacts are produced in `application/build_*` folders. Use your preferred flashing tool (ST-LINK, OpenOCD, or vendor tool) to flash `resources/bin/ak-base-kit-stm32l151-application.bin` or the build output.
-
-Notes:
-- The `boot` folder contains a small bootloader and its build system. If you are using the provided binaries in `resources/bin`, flashing just the application image is usually sufficient.
-
-Repository structure (high-level)
---------------------------------
-- `application/` — application build scripts and all game-related source code.
-    - `Makefile` — top-level application build rules. Build here to produce the application binary.
-    - `sources/` — C/C++ source code for the game, drivers, screens and app logic.
-        - `app/` — core application files and screens (game state, settings, gamescreen implementations).
-            - `screens/` — each screen (menu, game, charts, settings, game over) lives here. Key files:
-                - [application/sources/app/screens/scr_dino_run.cpp](application/sources/app/screens/scr_dino_run.cpp): main Dino Run game screen and game loop.
-                - [application/sources/app/screens/scr_menu_game.cpp](application/sources/app/screens/scr_menu_game.cpp): menu handling and navigation.
-                - [application/sources/app/screens/scr_game_over.cpp](application/sources/app/screens/scr_game_over.cpp): game over screen and options.
-                - [application/sources/app/screens/scr_game_setting.cpp](application/sources/app/screens/scr_game_setting.cpp): settings screen.
-        - `driver/` — hardware drivers and glue code.
-            - [application/sources/driver/Adafruit_oled_drv/Adafruit_oled_drv.cpp](application/sources/driver/Adafruit_oled_drv/Adafruit_oled_drv.cpp): OLED display driver used by the game renderer.
-            - [application/sources/driver/button/button.c](application/sources/driver/button/button.c): button driver used to read user input.
-            - `buzzer`, `led`, `flash`, `eeprom` drivers: handle audio feedback and persistent storage.
-        - `common/` — helpers and common functionality (view rendering, screen manager, utils):
-            - [application/sources/common/view_render.cpp](application/sources/common/view_render.cpp)
-            - [application/sources/common/screen_manager.cpp](application/sources/common/screen_manager.cpp)
-
-- `boot/` — bootloader sources and build system. Contains platform/STM32L startup files, linker scripts, and vendor CMSIS/driver code.
-    - `stm32l_init.gdb` and other debug helpers live here for early-stage bring-up.
-
-- `resources/` — assets and prebuilt binaries.
-    - `resources/images/bitmap/` — collection of small PNG bitmaps used to produce microcontroller bitmaps for the OLED (dino, cacti, obstacles, icons).
-    - `resources/bin/` — prebuilt `boot.bin` and `application.bin` images (ready to flash).
-
-- `LICENSE` — project license.
-
-Important files and what they do (systematic reference)
------------------------------------------------------
-This section lists the most relevant files and their responsibilities. For large vendor/third-party libraries (CMSIS, StdPeriph), we describe purpose rather than repeat every file.
-
-- `application/Makefile` — orchestrates the build of the application image. Edit only if you change build paths or toolchain options.
-- `boot/Makefile` — bootloader build rules.
-- `application/sources/app/app.cpp` and `application/sources/app/app.h` — application entry, initialization and main task registration.
-- `application/sources/app/app_bsp.cpp`, `app_bsp.h` — board support package: maps buttons, buzzer and display initialization to hardware-specific pins.
-- `application/sources/app/app_data.cpp`, `app_data.h` — persistent storage, high score save/load helpers (wrapping eeprom/flash driver).
-- `application/sources/app/screens/scr_dino_run.cpp` — the Dino Run gameplay implementation. Contains:
-    - initialization of game objects (player, obstacles), timer-driven updates (game tick), collision detection and score update logic.
-    - input handling for jump/duck mapped through button driver messages.
-- `application/sources/common/view_render.*` — the renderer that draws sprites/bitmaps and text onto the OLED via the Adafruit driver.
-- `application/sources/driver/Adafruit_oled_drv/` — contains `Adafruit_GFX` port and OLED low-level SPI/I2C code.
-- `application/sources/driver/button/button.c` and `boot/sources/driver/button/button.c` — debounce and event generation from physical buttons; the application listens for signals/messages generated by these drivers.
-- `application/sources/driver/eeprom/` and `boot/sources/driver/flash/` — drivers for non-volatile storage where high-scores and settings are saved.
-
-Assets and bitmaps
-------------------
-- Source PNGs and small images: `application/sources/app/images/` and `resources/images/bitmap/` contain original sprites (dino, cactus, bird, bullet, icons). Those are the canonical assets. To change visuals, update PNGs and regenerate the corresponding C bitmaps or update the bitmap assembler used in `screens_bitmap.cpp`.
-- `application/sources/app/screens/screens_bitmap.*` — contains compiled bitmap tables (C arrays) used directly by renderer to blit images on the OLED.
-
-Build artifacts and third-party code
-----------------------------------
-- Vendor libraries (CMSIS, StdPeriph) and the Arduino compatibility layer are included under `boot/sources/platform/stm32l` and `application/sources/platform/stm32l/arduino/` to simplify porting and provide required HAL functions. These are not edited for game logic and are present so the project builds out-of-the-box.
-- Many generated/compiled object files and documentation files live under those vendor directories — you can treat them as read-only dependencies.
-
-How the game is structured (runtime overview)
--------------------------------------------
-- Event-driven architecture: the code uses a small message/task framework (`application/sources/ak/` and `application/sources/ak/inc`) to pass signals and messages between tasks. The screen manager sends periodic time-tick signals to update objects, while button drivers generate action signals (jump/duck).
-- Main runtime loop (conceptual):
-    1. `app` initializes hardware and registers screens/tasks.
-    2. `screen_manager` activates the current screen (menu, dino run).
-    3. Timer tick signals (every 100ms or configured tick) drive game updates: move obstacles, animate sprite frames, check collisions.
-    4. Input signals modify player state (jump/duck) and may trigger sound effects via the buzzer driver.
-    5. On collision, the border/task signals a reset; score is saved and `scr_game_over` is displayed.
-
-Editing and extending the game
--------------------------------
-- To add/modify sprites: update PNGs in `resources/images/bitmap/` or `application/sources/app/images/` and regenerate the bitmap arrays (the project uses `screens_bitmap.cpp` to store arrays — update or add a small conversion script to transform PNG to C arrays if needed).
-- To change game rules (speed, scoring): edit `scr_dino_run.cpp` and the configuration in `app/game_setting` structures (see `scr_game_setting.cpp`).
-- To add new screens: follow the `scr_*` pattern (header + cpp) and register the new screen in `screen_manager` and `screens.h`.
-
-Debugging and testing notes
----------------------------
-- Use `stm32l_init.gdb` (present in both `application` and `boot`) for GDB debugging and step-through.
-- Logging and debug prints use `app_dbg.h` and `APP_DBG_*` macros — enable them in the build by setting debug flags in the Makefile.
-
-Files of interest (quick links)
-------------------------------
-- Application entry: [application/sources/app/app.cpp](application/sources/app/app.cpp)
-- Dino screen: [application/sources/app/screens/scr_dino_run.cpp](application/sources/app/screens/scr_dino_run.cpp)
-- Menu: [application/sources/app/screens/scr_menu_game.cpp](application/sources/app/screens/scr_menu_game.cpp)
-- Game settings: [application/sources/app/screens/scr_game_setting.cpp](application/sources/app/screens/scr_game_setting.cpp)
-- Renderer: [application/sources/common/view_render.cpp](application/sources/common/view_render.cpp)
-- OLED driver: [application/sources/driver/Adafruit_oled_drv/Adafruit_oled_drv.cpp](application/sources/driver/Adafruit_oled_drv/Adafruit_oled_drv.cpp)
-- Buttons: [application/sources/driver/button/button.c](application/sources/driver/button/button.c)
-- EEPROM: [application/sources/driver/eeprom/eeprom.cpp](application/sources/driver/eeprom/eeprom.cpp)
-
-Contributing
-------------
-- Fork, create a feature branch, and open a pull request. Keep game changes limited to `application/sources/app/` and artwork in `resources/images/` unless you are updating hardware drivers.
-
-License
--------
-See [LICENSE](LICENSE) in the repository root.
-
-Acknowledgements
-----------------
-- This project reuses and adapts code and assets from AK Embedded Base Kit examples and vendor libraries (CMSIS, STM32 StdPeriph). Those third-party components keep their original licenses and are included as-vendor code.
-
-If you want, I can:
-- generate a per-file table listing every source file and a one-line description (long output), or
-- add build instructions for specific toolchains (OpenOCD / st-flash / ST-LINK GUI).
-
----
-Last updated: May 18, 2026
-
-
-#### 2.2.1 Thuộc tính đối tượng
-Việc liệt kê các thuộc tính của đối tượng trong game có các tác dụng quan trọng sau:
-- Giúp xác định rõ thông tin về đối tượng trong game.
-- Giúp xác định cấu trúc dữ liệu phù hợp để lưu trữ thông tin của đối tượng.
-- Khi bạn xác định trước các thuộc tính cần thiết, bạn giảm thiểu khả năng bỏ sót hoặc nhầm lẫn trong việc xử lý và sử dụng các thuộc tính.
-
-**Trạng thái** của một đối tượng được biểu diễn bởi các **thuộc tính**. Trong trò chơi này các đối tượng có các thuộc tính cụ thể là:
-- **visible:** Quy định hiển thị, ẩn/hiện của đối tượng.
-- **x, y:** Quy định vị trí của đối tượng trên màn hình.
-- **action_image:** Quy định hoạt ảnh tạo animation.
-
-Ví dụ:
-
-    typedef struct {
-        bool visible;
-        uint32_t x, y;
-        uint8_t action_image;
-    } ar_game_archery_t;
-
-    extern ar_game_archery_t archery;
-
-**Áp dụng struct cho các đối tượng:**
-|struct|Các biến|
-|------|--------|
-|ar_game_archery_t|archery|
-|ar_game_arrow_t|arrow[MAX_NUM_ARROW]|
-|ar_game_bang_t|bang[NUM_BANG]|
-|ar_game_border_t|border|
-|ar_game_meteoroid_t|meteoroid[NUM_METEOROIDS]|
-
-**(*)** Các đối tượng có số lượng nhiều thì sẽ được khai báo dạng mảng.
-
-**Các biến quan trọng:**
-- **ar_game_score:** Điểm của trò chơi.
-- **ar_game_status:** Trạng thái quả trò chơi.
-  - GAME_OFF: Tắt .
-  - GAME_ON: Bật.
-  - GAME_OVER: Đã thua.
-
-- **ar_game_setting_t** settingsetup : Cấu hình cấp độ của trò chơi.
-  - settingsetup.silent : Bật/tắt chế độ im lặng.
-  - settingsetup.num_arrow : Cấu hình số lượng mũi tên.
-  - settingsetup.arrow_speed : Cấu hình tốc độ mũi tên.
-  - settingsetup.meteoroid_speed : Cấu hình tốc độ của thiên thạch.
-
-#### 2.2.2 Task
-Trong lập trình event-driven, task là một đơn vị độc lập đảm nhiệm một nhóm công việc nhất định. Khi hệ thống scheduler tìm thấy message liên quan đến task trong hàng đợi, hệ thống sẽ gọi hàm thực thi của task để xử lý message được gửi đến. Một số tác dụng quan trọng của task:
-- **Xử lý sự kiện:** Task được sử dụng để xử lý các message được bắn đến khi có sự kiện xảy ra. Mỗi task có thể được liên kết với một sự kiện cụ thể và thực thi một loạt các hành động khi sự kiện đó xảy ra.
-- **Đồng bộ hóa:** Task cung cấp cơ chế đồng bộ hóa cho việc xử lý các sự kiện. Khi một sự kiện xảy ra, task tương ứng được kích hoạt và thực thi. Các task khác sẽ đợi cho đến khi task hiện tại hoàn thành trước khi được kích hoạt. Điều này giúp đảm bảo rằng các hành động xử lý sự kiện được thực hiện theo một thứ tự nhất định và tránh xung đột.
-- **Quản lý luồng điều khiển:** Task cho phép quản lý luồng sự kiện trong ứng dụng event-driven. Bằng cách sử dụng task, bạn có thể xác định thứ tự thực thi của các hành động khi xảy ra các sự kiện khác nhau.
-- **Tách biệt logic:** Sử dụng task giúp tách biệt logic xử lý sự kiện, điều này giúp Source code rõ ràng, dễ đọc.
-- **Phân cấp nhiệm vụ:** Task level cho phép sắp xếp trình tự ưu tiên xử lý các message của task ở trong hàng đợi của hệ thống. Trong game các task level của game điều là 4 nên task nào được gọi trước sẽ xử lý trước. 
-
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/table_task.webp" alt="archery tasks design" width="720"/></p>
-<p align="center"><strong><em>Hình 6:</em></strong> Bảng Task của các đối tượng</p>
-
-#### 2.2.3 Message & Signal
-**Message** được chia làm 2 loại chính, Message chỉ chứa Signal và Message vừa chứa Signal và Data. **Message** tương đương với **Signal**
-
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/table_signal.webp" alt="archery signals design" width="720"/></p>
-<p align="center"><strong><em>Hình 7:</em></strong> Bảng Signal của từng Task</p>
-
-**(*)** Tác dụng của các Signal trong game: xem tại Ghi chú - Hình 5
-
-## III. Hướng dẫn chi tiết code trong đối tượng
-### 3.1 Archery
-**Sequence diagram:**
-
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/sequence_object/archery_sequence.webp" alt="archery sequence" width="640"/></p>
-<p align="center"><strong><em>Hình 8:</em></strong> Archery sequence</p>
-
-**Tóm tắt nguyên lý:** Archery sẽ nhận Signal thông được gửi từ 2 nguồn là Screen và Button. Quá trình xử lý của đối tượng phần làm 3 giai đoạn:
-- **Giai đoạn 1:** Bắt đầu game, cài đặt các thông số của Archery như vị trí và hình ảnh.
-- **Giai đoạn 2:** Chơi game, trong giai đoạn này chia làm 2 hoạt động là:
-  - Cập nhật: Screen gửi Signal cập nhật cho Archery mỗi 100ms để cập nhật trạng thái hiện tại của Archery.
-  - Hành động: Button gửi Signal di chuyển lên/xuống cho Archery mỗi khi nhấn nút.
-- **Giai đoạn 3:** Kết thúc game, thực hiện cài đặt lại trạng thái của Archery trước khi thoát game.
-
-**Code:**
-
-Trong code bạn có thể dùng macro để thay thế hàm void trong nhiều trường hợp.
-
-    #define TEN_DOAN_CODE()
-    do { \
-        /*code*/ \
-    } while(0);
-
-Khai báo: Thư viện, struct và biến.
-
-    #include "ar_game_archery.h"
-
-    ar_game_archery_t archery;
-    static uint32_t archery_y = AXIS_Y_ARCHERY;
-
-AR_GAME_ARCHERY_SETUP() là một macro được dùng định nghĩa để cài đặt trạng thái ban đầu của trò chơi bắn cung. Nó đặt các giá trị của biến archery và sử dụng các hằng số được định nghĩa trước đó để thiết lập tọa độ, màu sắc và hình ảnh của cung.
-
-    #define AR_GAME_ARCHERY_SETUP() \
-    do { \
-        archery.x = AXIS_X_ARCHERY; \
-        archery.y = AXIS_Y_ARCHERY; \
-        archery.visible = WHITE; \
-        archery.action_image = 1; \
-    } while (0);
-
-AR_GAME_ARCHERY_UP() là một macro được sử dụng để di chuyển cung lên trên. Nó giảm giá trị của archery_y bằng một giá trị STEP_ARCHERY_AXIS_Y và kiểm tra nếu giá trị mới bằng 0, nó được gán lại là 10.
-
-    #define AR_GAME_ARCHERY_UP() \
-    do { \
-        archery_y -= STEP_ARCHERY_AXIS_Y; \
-        if (archery_y == 0) {archery_y = 10;} \
-    } while(0);
-
-AR_GAME_ARCHERY_DOWN() là một macro được sử dụng để di chuyển cung xuống dưới. Nó tăng giá trị của archery_y bằng một giá trị STEP_ARCHERY_AXIS_Y và kiểm tra nếu giá trị mới vượt quá 50, nó được gán lại là 50.
-
-    #define AR_GAME_ARCHERY_DOWN() \
-    do { \
-        archery_y += STEP_ARCHERY_AXIS_Y; \
-        if (archery_y > 50) {archery_y = 50;} \
-    } while(0);
-
-AR_GAME_ARCHERY_RESET() là một macro được sử dụng để đặt lại trạng thái ban đầu của trò chơi cung bắn. Nó đặt lại giá trị của archery, archery_y và làm cho cung trở nên không hiển thị.
-
-    #define AR_GAME_ARCHERY_RESET() \
-    do { \
-        archery.x = AXIS_X_ARCHERY; \
-        archery.y = AXIS_Y_ARCHERY; \
-        archery.visible = BLACK; \
-        archery_y = AXIS_Y_ARCHERY; \
-    } while(0);
-
-Hàm ar_game_archery_handle() là một hàm xử lý các thông điệp (messages) liên quan đến trò chơi cung bắn. Nó chứa một câu lệnh switch-case để xử lý các thông điệp khác nhau. Các thông điệp được gửi đến hàm này thông qua một tham số msg có kiểu dữ liệu ak_msg_t. Mỗi case trong switch-case xử lý một thông điệp cụ thể.
-
-    void ar_game_archery_handle(ak_msg_t* msg) {
-        switch (msg->sig) {
-        case AR_GAME_ARCHERY_SETUP: {
-            APP_DBG_SIG("AR_GAME_ARCHERY_SETUP\n");
-            AR_GAME_ARCHERY_SETUP();
-        }
-            break;
-
-        case AR_GAME_ARCHERY_UPDATE: {
-            APP_DBG_SIG("AR_GAME_ARCHERY_UPDATE\n");
-            archery.y = archery_y;
-        }
-            break;
-
-        case AR_GAME_ARCHERY_UP: {
-            APP_DBG_SIG("AR_GAME_ARCHERY_UP\n");
-            AR_GAME_ARCHERY_UP();
-        }
-            break;
-
-        case AR_GAME_ARCHERY_DOWN: {
-            APP_DBG_SIG("AR_GAME_ARCHERY_DOWN\n");
-            AR_GAME_ARCHERY_DOWN();
-        }
-            break;
-
-        case AR_GAME_ARCHERY_RESET: {
-            APP_DBG_SIG("AR_GAME_ARCHERY_RESET\n");
-            AR_GAME_ARCHERY_RESET();
-        }
-            break;
-
-        default:
-            break;
-        }
-    }
-
-
-### 3.2 Arrow
-
-**Sequence diagram:**
-
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/sequence_object/arrow_sequence.webp" alt="arrow sequence" width="640"/></p>
-<p align="center"><strong><em>Hình 9:</em></strong> Arrow sequence</p>
-
-**Tóm tắt nguyên lý:** Arrow sẽ nhận Signal thông được gửi từ 2 nguồn là Screen và Button. Quá trình xử lý của đối tượng phần làm 3 giai đoạn:
-- **Giai đoạn 1:** Bắt đầu game, cài đặt các thông số của Arrow. Tất cả Arrow vào trạng thái lặn, không hiển thị trên màn hình.
-- **Giai đoạn 2:** Chơi game, trong giai đoạn này chia làm 2 hoạt động là:
-  - Cập nhật: Screen gửi Signal di chuyển cho Arrow mỗi 100ms để tăng trạng thái của Arrow tạo sự di chuyển cho Arrow.
-  - Hành động: Button gửi Signal bắn tên cho Arrow mỗi khi nhấn nút. Arrow sẽ sẽ kiểm tra số mũi tên và nếu còn thì sẽ cập nhật trạng thái để bắn mũi tên ra tại vị trí hiện tại của Archery
-- **Giai đoạn 3:** Kết thúc game, thực hiện cài đặt lại trạng thái của Arrow trước khi thoát game.
-
-**Code:** Tương tự Archery (link tham khảo [Archery_game](https://github.com/ak-embedded-software/archery-game.git))
-
-### 3.3 Bang
-
-**Sequence diagram:**
-
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/sequence_object/bang_sequence.webp" alt="bang sequence" width="640"/></p>
-<p align="center"><strong><em>Hình 10:</em></strong> Bang sequence</p>
-
-**Tóm tắt nguyên lý:** Bang sẽ nhận Signal thông được gửi từ Screen. Quá trình xử lý của đối tượng phân làm 3 giai đoạn:
-- **Giai đoạn 1:** Bắt đầu game, cài đặt các thông số của Bang. Cho tất cả các bang về trạng thái lặn, không xuất hiện trên màn hình.
-- **Giai đoạn 2:** Chơi game, Vụ nổ chỉ xuất sau khi Meteoroid bị phá hủy. Vụ nổ bao gồm các hoạt ảnh được cập nhật sau mỗi 100ms sau 3 hoạt ảnh thì sẽ tự reset.
-- **Giai đoạn 3:** Kết thúc game, thực hiện cài đặt lại trạng thái của Arrow trước khi thoát game.
-
-**Code:** Tương tự Archery (link tham khảo [Archery_game](https://github.com/ak-embedded-software/archery-game.git))
-
-### 3.4 Border
-
-**Sequence diagram:**
-
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/sequence_object/border_sequence.webp" alt="border sequence" width="640"/></p>
-<p align="center"><strong><em>Hình 11:</em></strong> Border sequence</p>
-
-**Tóm tắt nguyên lý:** Border là 1 đối tượng bất động trong game. Có nhiệm vụ update level khi đến mốc điểm quy định và kiểm tra game over.
-- **Giai đoạn 1:** Bắt đầu game, cài đặt thông số vị trí và hiển thị của Border.
-- **Giai đoạn 2:** Chơi game, thực hiện các nhiệm vụ theo chu kỳ 100ms
-  - Kiểm tra số điểm nếu số điểm thêm 200 thì tăng tốc độ của Meteoroid.
-  - Kiểm tra vị trí của các Meteoroid nếu Meteoroid chạm vào Border thì gửi tín hiệu Reset đến Screen
-- **Giai đoạn 3:** Kết thúc game, thực hiện cài đặt lại trạng thái của Border trước khi thoát game.
-
-**Code:** Tương tự Archery (link tham khảo [Archery_game](https://github.com/ak-embedded-software/archery-game.git))
-
-###  3.5 Meteoroid
-
-**Sequence diagram:**
-
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/sequence_object/meteoroid_sequence.webp" alt="meteoroid sequence" width="640"/></p>
-<p align="center"><strong><em>Hình 12:</em></strong> Meteoroid sequence</p>
-
-**Tóm tắt nguyên lý:** Meteoroid là đối tượng xuất hiện và di chuyển liên tục trong game nhận signal từ Screen. Chia làm 3 giai đoạn:
-- **Giai đoạn 1:** Bắt đầu game, cài đặt thông số của Meteoroid. Cấp điểm xuất phát ngẫu nghiên cho Meteoroid, hiển thị lên màn hình.
-- **Giai đoạn 2:** Chơi game, thực hiện các nhiệm vụ theo chu kỳ 100ms
-  - Cập nhật vị trí và hoạt ảnh di chuyển cho Meteoroid
-  - Kiểm tra vị trí của các Arrow nếu Arrow chạm vào Meteoroid thì thực hiện reset Arrow và Meteoroid rồi tạo Bang.
-- **Giai đoạn 3:** Kết thúc game, thực hiện cài đặt lại trạng thái của Meteoroid trước khi thoát game.
-
-**Code:** Tương tự Archery (link tham khảo [Archery_game](https://github.com/ak-embedded-software/archery-game.git))
-
-## IV. Hiển thị và âm thanh trong trò chơi bắn cung
-### 4.1 Đồ họa
-
-Trong trò chơi, màn hình hiện thị là 1 màn hình **LCD OLed 1.3"** có kích thước là **128px*64px**. Nên các đối tượng được hiển thị trong game phải có kích thước hiển thị phù hợp với màn hình nên cần được thiết kế riêng. 
-
-Đồ họa được thiết kế từng phần theo từng đối tượng bằng phần mềm [Photopea](https://www.photopea.com/)
-
-#### 4.1.1 Thiết kế đồ họa cho các đối tượng
-
-<p align="center"><img src="https://github.com/ak-embedded-software/archery-game/blob/main/resources/images/table_bitmap.webp" alt="archery game bitmap" width="720"/></p>
-<p align="center"><strong><em>Hình 13:</em></strong> Bitmap của các đối tượng</p>
-
-**Bitmap** là một cấu trúc dữ liệu được sử dụng để lưu trữ và hiển thị hình ảnh trong game.
-
-**Animation** là ứng dụng việc nối ảnh của của nhiều ảnh liên tiếp tạo thành hoạt ảnh cho đổi tượng muốn miêu tả. Trong game, biến “action_image” trong đối tượng được sử dụng nối các ảnh theo thứ tự tạo thành animation.
-
-**Ghi chú:** Trong thiết kế trên có nhiều ảnh khác nhau cho cùng 1 đối tượng để tạo animation cho đối tượng đó nhằm tăng tính chân thật lúc chơi game.
-
-#### 4.1.2 Code
-
-**Archer display:**
-```cpp
-void ar_game_archery_display() {
-if (archery.visible == WHITE && settingsetup.num_arrow != 0) {
-    view_render.drawBitmap( archery.x, \
-                            archery.y - 10, \
-                            bitmap_archery_I, \
-                            SIZE_BITMAP_ARCHERY_X, \
-                            SIZE_BITMAP_ARCHERY_Y, \
-                            WHITE);
-}
-else if (archery.visible == WHITE && settingsetup.num_arrow == 0) {
-    view_render.drawBitmap( archery.x, \
-                            archery.y - 10, \
-                            bitmap_archery_II, \
-                            SIZE_BITMAP_ARCHERY_X, \
-                            SIZE_BITMAP_ARCHERY_Y, \
-                            WHITE);
-}
-}
-```
-
-**Arrow display:**
-```cpp
-void ar_game_arrow_display() {
-    for (uint8_t i = 0; i < MAX_NUM_ARROW; i++) {
-        if (arrow[i].visible == WHITE) {
-            view_render.drawBitmap( arrow[i].x, \
-                                    arrow[i].y, \
-                                    bitmap_arrow, \
-                                    SIZE_BITMAP_ARROW_X, \
-                                    SIZE_BITMAP_ARROW_Y, \
-                                    WHITE);
-        }
-    }
-}
-```
-
-**Meteoroid display:**
-```cpp
-void ar_game_meteoroid_display() {
-    for (uint8_t i = 0; i < NUM_METEOROIDS; i++) {
-        if (meteoroid[i].visible == WHITE) {
-            if (meteoroid[i].action_image == 1) {
-                view_render.drawBitmap( meteoroid[i].x, \
-                                        meteoroid[i].y, \
-                                        bitmap_meteoroid_I, \
-                                        SIZE_BITMAP_METEOROIDS_X, \
-                                        SIZE_BITMAP_METEOROIDS_Y, \
-                                         WHITE);
-            }
-            else if (meteoroid[i].action_image == 2) {
-                view_render.drawBitmap( meteoroid[i].x, \
-                                        meteoroid[i].y, \
-                                        bitmap_meteoroid_II, \
-                                        SIZE_BITMAP_METEOROIDS_X, \
-                                        SIZE_BITMAP_METEOROIDS_Y, \
-                                        WHITE);
-            }
-            else if (meteoroid[i].action_image == 3) {
-                view_render.drawBitmap( meteoroid[i].x, \
-                                        meteoroid[i].y, \
-                                        bitmap_meteoroid_III, \
-                                        SIZE_BITMAP_METEOROIDS_X, \
-                                        SIZE_BITMAP_METEOROIDS_Y, \
-                                        WHITE);
-            }
-        }
-    }
-}
-```
-
-**Bang display:**
-```cpp
-void ar_game_bang_display() {
-    for (uint8_t i = 0; i < NUM_BANG; i++) {
-        if (bang[i].visible == WHITE) {
-            if (bang[i].action_image == 1) {
-                view_render.drawBitmap( bang[i].x, \
-                                        bang[i].y, \
-                                        bitmap_bang_I, \
-                                        SIZE_BITMAP_BANG_I_X, \
-                                        SIZE_BITMAP_BANG_I_Y, \
-                                        WHITE);
-            }
-            else if (bang[i].action_image == 2) {
-                view_render.drawBitmap( bang[i].x, \
-                                        bang[i].y, \
-                                        bitmap_bang_II, \
-                                        SIZE_BITMAP_BANG_I_X, \
-                                        SIZE_BITMAP_BANG_I_Y, \
-                                        WHITE);
-            }
-            else if (bang[i].action_image == 3) {
-                view_render.drawBitmap( bang[i].x + 2, \
-                                        bang[i].y - 1, \
-                                        bitmap_bang_III, \
-                                        SIZE_BITMAP_BANG_II_X, \
-                                        SIZE_BITMAP_BANG_II_Y, \
-                                        WHITE);
-            }
-        }
-    }
-}
-```
-
-**Border display:**
-```cpp
-void ar_game_border_display() {
-    if (border.visible == WHITE) {
-        view_render.drawFastVLine(  border.x, \
-                                    AXIS_Y_BORDER_ON, \
-                                    AXIS_Y_BORDER_UNDER, \
-                                    WHITE);
-        for (uint8_t i = 0; i < NUM_METEOROIDS; i++) {
-            view_render.fillCircle( border.x, \
-                                    meteoroid[i].y + 5, \
-                                    1, \
-                                    WHITE);
-        }
-    }
-}
-```
-
-**Game frame display:**
-```cpp
-void ar_game_frame_display() {
-    view_render.setTextSize(1);
-    view_render.setTextColor(WHITE);
-    view_render.setCursor(2,55);
-    view_render.print("Arrow:");
-    view_render.print(settingsetup.num_arrow);
-    view_render.setCursor(60,55);
-    view_render.print(" Score:");
-    view_render.print(ar_game_score);
-    view_render.drawLine(0, LCD_HEIGHT,    LCD_WIDTH, LCD_HEIGHT,    WHITE);
-    view_render.drawLine(0, LCD_HEIGHT-10, LCD_WIDTH, LCD_HEIGHT-10, WHITE);
-    view_render.drawRect(0, 0, 128, 64, 1);
-}
-```
-
-**Screen display:**
-```cpp
-void view_scr_archery_game() {
-    if (ar_game_status == GAME_ON) {
-        ar_game_frame_display();
-        ar_game_archery_display();
-        ar_game_arrow_display();
-        ar_game_meteoroid_display();
-        ar_game_bang_display();
-        ar_game_border_display();
-    }
-    else if (ar_game_status == GAME_OVER) {
-        view_render.clear();
-        view_render.setTextSize(2);
-        view_render.setTextColor(WHITE);
-        view_render.setCursor(17, 24);
-        view_render.print("YOU LOSE");
-    }
-}
-```
-
+# Ak Base Kit - Dino Game
+
+## Dino Game picture
+<table align="center">
+  <tr>
+    <td align="center"><img src="resources/dino_game_running.png" alt="Dino game" width="512" height="256"/></td>
+  </tr>
+</table>
+<p align="center"><strong><em>Figure 1:</em></strong> The Dino Game</p>
+
+## Tables of Content
+<!--ts-->
+   * [Overview](#OverView)
+   * [Features](#Features)
+   * [Hardware](#Hardware)
+   * [Software](#Software)
+   * [Folder Structure](#structure)
+   * [Getting Started](#getstart)
+   * [Programming and Flashing](#pnf)
+   * [Game modules](#gamemod)
+   * [Development](#develop)
+   * [Troubleshooting](#troubleshoot)
+   * [Game sample](#gamesamp)
+   * [Location](#location)
+   * [Liscence](#liscence)
+   * [Additional Resources](#addresource)
+<!--te-->
+
+## Overview
+
+This STM32L151 Ak-Kit project is inspired by the offline dinosaur game (https://trex-runner.com/) developed by Google. In the game, the main character, the dinosaur, must jump or duck to avoid oncoming obstacles such as birds and cacti. The primary goal is to survive as long as possible by skillfully navigating these challenges. Each 100 milliseconds of survival increases your score by 1 point, motivating players to maintain focus and endurance. To keep the game moving, press the UP button to make the dinosaur jump and avoid the obstacles. You can adjust the game speed through the settings menu. Additionally, the sound can be enabled or disabled in the same settings menu, allowing for a customizable gaming experience.
+
+## Features
+<details>
+    <summary> Jump and Duck to avoid obstacles </summary>
+    Jump and duck to avoid oncoming obstacles (cacti and birds).
+</details>
+<details>
+    <summary> Time based scoring system </summary>
+    Score increases continuously while surviving (score increments per tick/time).
+</details>
+<details>
+    <summary> Multiple obstacles type </summary>
+    Ground cacti (several sprite types) and occasional flying birds.
+</details>
+<details>
+    <summary> Abjsutable game speed </summary>
+    Speed setting affects obstacle/bird velocity and jump timing.
+</details>
+<details>
+    <summary> Game state and timers </summary>
+    Uses timers for game ticks and obstacle spawn, end-screen display, restart logic, and limited on-screen obstacles.
 </details>
 
-### 4.2 Âm thanh
-Âm thành được thiết kế qua website [Arduino Music](https://www.instructables.com/Arduino-Music-From-Sheet-Music/)
+## Hardware
+ST state-of-the-art patented technology
 
-Trong khi chơi, để trò chơi thêm phần xinh động và chân thật thì việc có âm thanh là điều cần thiết. 
-
-Các âm thanh cần thiết kế: nút nhấn, bắn tên, vụ nổ, nhạc game.
-
-**Code:**
-
-```cpp
-// Âm thanh Bắt đầu game 
-BUZZER_PlayTones(tones_SMB);
-
-// Âm thanh Vụ nổ 
-BUZZER_PlayTones(tones_BUM);
-
-// Âm thanh nút nhấn
-BUZZER_PlayTones(tones_cc);
-
-// Âm thanh cảnh báo
-BUZZER_PlayTones(tones_3beep);
-
-// Merry Christmas
-BUZZER_PlayTones(tones_merryChristmas);
-
-/*________________BUZZER______________*/
-
-void BUZZER_Sleep(bool sleep);
-/*  sleep = 0 : bật âm thanh 
-    sleep = 1 : tắt âm thanh */
-
-static const Tone_TypeDef tones_BUM[] = {
-    {3000,3},
-    {4500,6},
-    {   0,0}
-};
-
-static const Tone_TypeDef tones_cc[] = {
-    {2000,2}, 
-    {   0,0}, 
-};
-
-static const Tone_TypeDef tones_startup[] = {
-    {2000,3},
-    {   0,3},
-    {3000,3},
-    {   0,3},
-    {4000,3},
-    {   0,3},
-    {1200,4},
-    {   0,6},
-    {4500,6},
-    {   0,0}     // <-- tones end
-};
-
-static const Tone_TypeDef tones_3beep[] = {
-    {4000, 3},
-    {   0,10},
-    {1000, 6},
-    {   0,10},
-    {4000, 3},
-    {   0, 0}
-};
-
-// "Super Mario bros." =
-static const Tone_TypeDef tones_SMB[] = {
-    {2637,18}, // E7 x2
-    {   0, 9}, // x3
-    {2637, 9}, // E7
-    {   0, 9}, // x3
-    {2093, 9}, // C7
-    {2637, 9}, // E7
-    {   0, 9}, // x3
-    {3136, 9}, // G7
-    {   0,27}, // x3
-    {1586, 9}, // G6
-    {   0,27}, // x3
-
-    {2093, 9}, // C7
-    {   0,18}, // x2
-    {1586, 9}, // G6
-    {   0,18}, // x2
-    {1319, 9}, // E6
-    {   0,18}, // x2
-    {1760, 9}, // A6
-    {   0, 9}, // x1
-    {1976, 9}, // B6
-    {   0, 9}, // x1
-    {1865, 9}, // AS6
-    {1760, 9}, // A6
-    {   0, 9}, // x1
-
-    {1586,12}, // G6
-    {2637,12}, // E7
-    {3136,12}, // G7
-    {3520, 9}, // A7
-    {   0, 9}, // x1
-    {2794, 9}, // F7
-    {3136, 9}, // G7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2093, 9}, // C7
-    {2349, 9}, // D7
-    {1976, 9}, // B6
-    {   0,18}, // x2
-
-    {2093, 9}, // C7
-    {   0,18}, // x2
-    {1586, 9}, // G6
-    {   0,18}, // x2
-    {1319, 9}, // E6
-    {   0,18}, // x2
-    {1760, 9}, // A6
-    {   0, 9}, // x1
-    {1976, 9}, // B6
-    {   0, 9}, // x1
-    {1865, 9}, // AS6
-    {1760, 9}, // A6
-    {   0, 9}, // x1
-
-    {1586,12}, // G6
-    {2637,12}, // E7
-    {3136,12}, // G7
-    {3520, 9}, // A7
-    {   0, 9}, // x1
-    {2794, 9}, // F7
-    {3136, 9}, // G7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2093, 9}, // C7
-    {2349, 9}, // D7
-    {1976, 9}, // B6
-
-    {   0, 0}
-};
-
-// Merry Christmas
-static const Tone_TypeDef tones_merryChristmas[] = {
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0,18}, // x2
-
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0,18}, // x2
-
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {3136, 9}, // G7
-    {   0, 9}, // x1
-    {2093, 9}, // C7
-    {   0, 9}, // x1
-    {2349, 9}, // D7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0,24}, // x2
-
-    {2794, 9}, // F7
-    {   0, 9}, // x1
-    {2794, 9}, // F7
-    {   0, 9}, // x1
-    {2794, 9}, // F7
-    {   0, 9}, // x1
-    {2794, 9}, // F7
-    {   0, 9}, // x1
-    {2794, 9}, // F7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2349, 9}, // D7
-    {   0, 9}, // x1
-    {2349, 9}, // D7
-    {   0, 9}, // x1
-    {2637, 9}, // E7
-    {   0, 9}, // x1
-    {2349, 9}, // D7
-    {   0, 9}, // x1
-    {3136, 9}, // G7
-    {   0, 0}  // <-- tones end
-};
-```
-
+<table align="center">
+  <tr>
+    <td align="center"><img src="resources/akkit_architecture.png" alt="akkit arch" width="620" height="290"/></td>
+  </tr>
+</table>
+<p align="center"><strong><em>Figure 1:</em></strong> The Dino Game</p>
+<details>  
+    <summary>Ultra-low-power platform</summary>
+            1.65 V to 3.6 V power supply
+            -40°C to 105°C temperature range
+            305 nA Standby mode (3 wakeup pins)
+            1.15 µA Standby mode + RTC
+            0.475 µA Stop mode (16 wakeup lines)
+            1.35 µA Stop mode + RTC
+            11 µA Low-power run mode
+            230 µA/MHz Run mode
+            10 nA ultra-low I/O leakage
+            8 µs wakeup time
+</details> 
+<details>   
+    <summary>Core: Arm® Cortex®-M3 32-bit CPU</summary>
+            From 32 kHz up to 32 MHz max
+            33.3 DMIPS peak (Dhrystone 2.1)
+            Memory protection unit
+            Up to 34 capacitive sensing channels
+            CRC calculation unit, 96-bit unique ID
+</details>  
+<details>
+        <summary>Reset and supply management</summary>
+            Low-power, ultrasafe BOR (brownout reset) with 5 selectable thresholds
+            Ultra-low-power POR/PDR
+            Programmable voltage detector (PVD)
+</details> 
+<details>
+        <summary>Clock sources</summary>
+            1 to 24 MHz crystal oscillator
+            32 kHz oscillator for RTC with calibration
+            High Speed Internal 16 MHz factory-trimmed RC (+/- 1%)
+            Internal low-power 37 kHz RC
+            Internal multispeed low-power 65 kHz to 4.2 MHz
+            PLL for CPU clock and USB (48 MHz)
+</details>
+<details>
+        <summary>Pre-programmed bootloader</summary>
+            USB and USART supported
+        Serial wire debug, JTAG and trace
+        Up to 116 fast I/Os (102 I/Os 5V tolerant), all mappable on 16 external interrupt vectors
+</details>
+<details>
+        <summary>Memories</summary>
+            384 Kbytes of Flash memory with ECC (with 2 banks of 192 Kbytes enabling Rww capability)
+            48 Kbytes of RAM
+            12 Kbytes of true EEPROM with ECC
+            128-byte backup register
+            Memory interface controller supporting SRAM, PSRAM and NOR Flash
+        LCD driver (except STM32L151xD devices) up to 8x40 segments, contrast adjustment, blinking mode, step-up converter
+</details>
+<details>
+        <summary>Rich analog peripherals (down to 1.8V)</summary>
+            3x operational amplifiers
+            12-bit ADC 1 Msps up to 40 channels
+            12-bit DAC 2 ch with output buffers
+            2x ultra-low-power-comparators(window mode and wakeup capability)
+</details>
+<details>
+        <summary>DMA controller 12x channels</summary>
+        12x peripheral communication interfaces
+            1x USB 2.0 (internal 48 MHz PLL)
+            5x USARTs
+            Up to 8x SPIs (2x I2S, 3x 16 Mbit/s)
+            2x I2Cs (SMBus/PMBus)
+            1x SDIO interface
+        11x timers: 1x 32-bit, 6x 16-bit with up to 4 IC/OC/PWM channels, 2x 16-bit basic timers, 2x watchdog timers (independent and window)
 </details>
 
-**Ghi chú:** Nếu không có thời gian hoặc không có khiếu âm nhạc thì tốt nhất nên dùng các thư viện trên github
 
-## V. Quản lý EEPROM
+## Software
 
-EEPROM được sử dụng để lưu lại các dữ liệu cần giữ sau khi tắt nguồn, bao gồm bảng điểm và cấu hình trò chơi. Vì EEPROM có thể chứa dữ liệu rác, nên mỗi khối dữ liệu lưu xuống EEPROM sẽ được bọc thêm `Magic number` và `checksum` để đảm bảo tính toàn vẹn.
 
-### 5.1 Cấu trúc quản lý
-
-Mỗi record lưu vào EEPROM có dạng:
-
-```text
-+----------------------+----------------------+----------------------+
-| Magic number         | Data                 | Checksum             |
-| 4 bytes              |                      | 1 byte               |
-+----------------------+----------------------+----------------------+
-```
-
-Trong đó:
-- `Magic number`: Với mỗi ứng dụng có 1 Magic number riêng.
-- `Data`: Dữ liệu cần lưu.
-- `Checksum`: Tổng các byte từ `Magic number` đến hết phần `data`, dùng để kiểm tra dữ liệu có bị thay đổi hay không.
-
-### 5.2 Tác dụng
-
-Cơ chế sử dụng `Magic number` kết hợp với `Checksum` giúp đảm bảo tính hợp lệ và toàn vẹn của dữ liệu trong EEPROM:
-- **Phát hiện dữ liệu bị lỗi hoặc bị thay đổi ngoài ý muốn:** `Checksum` cho phép kiểm tra tính toàn vẹn của dữ liệu, tránh sử dụng dữ liệu đã bị hỏng.
-- **Phát hiện dữ liệu phù hợp:** với mỗi ứng dụng nên dùng 1 `Magic number` riêng, việc này giúp tránh đọc nhầm dữ liệu của firmware khác.
-
-**Code:**
-```cpp
-extern bool ar_game_score_read(ar_game_score_t* data);
-extern bool ar_game_score_write(ar_game_score_t* data);
-
-extern bool ar_game_setting_read(ar_game_setting_t* data);
-extern bool ar_game_setting_write(ar_game_setting_t* data);
-```
+## Folder Structure

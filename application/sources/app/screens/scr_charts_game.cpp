@@ -66,7 +66,7 @@ void scr_charts_game_handle(ak_msg_t* msg) {
 
 	case AC_DISPLAY_BUTTON_MODE_RELEASED: {
 		APP_DBG_SIG("AC_DISPLAY_BUTTON_MODE_RELEASED\n");
-		SCREEN_TRAN(scr_idle_handle, &scr_idle);
+		SCREEN_TRAN(scr_menu_game_handle, &scr_menu_game);
 		BUZZER_PlaySound(BUZZER_SOUND_CLICK);
 	} break;
 
@@ -82,7 +82,7 @@ void scr_charts_game_handle(ak_msg_t* msg) {
 
 	case AC_DISPLAY_BUTTON_DOWN_RELEASED: {
 		APP_DBG_SIG("AC_DISPLAY_BUTTON_DOWN_RELEASED\n");
-		SCREEN_TRAN(scr_idle_handle, &scr_idle);
+		SCREEN_TRAN(scr_menu_game_handle, &scr_menu_game);
 		BUZZER_PlaySound(BUZZER_SOUND_CLICK);
 	} break;
 

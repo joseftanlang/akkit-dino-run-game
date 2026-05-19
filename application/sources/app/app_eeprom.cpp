@@ -46,15 +46,15 @@ void ar_game_score_set_default(ar_game_score_t *data) {
 bool ar_game_score_read(ar_game_score_t *data) {
 	ar_game_score_eeprom_t eeprom_data;
 
-	uint8_t ret =eeprom_read(EEPROM_SCORE_START_ADDR, (uint8_t *)&eeprom_data, sizeof(eeprom_data));
+	uint8_t ret = eeprom_read(EEPROM_SCORE_START_ADDR, (uint8_t *)&eeprom_data, sizeof(eeprom_data));
 
 	if (ret == EEPROM_DRIVER_OK && ar_game_eeprom_is_valid(&eeprom_data.magic_number, eeprom_data.check_sum, AR_GAME_SCORE_CHECKSUM_SIZE)) {
 		*data = eeprom_data.data;
-    	return true;
+		return true;
 	}
 
-  ar_game_score_set_default(data);
-  return false; 
+	ar_game_score_set_default(data);
+	return false;
 }
 
 bool ar_game_score_write(ar_game_score_t *data) {
@@ -67,8 +67,8 @@ bool ar_game_score_write(ar_game_score_t *data) {
 }
 
 void ar_game_setting_set_default(ar_game_setting_t *data) {
-	data->silent	      = AR_GAME_SETTING_SILENT_ON;
-	data->num_arrow	  	  = AR_GAME_SETTING_NUM_ARROW_DEFAULT;
+	data->silent		  = AR_GAME_SETTING_SILENT_ON;
+	data->num_arrow		  = AR_GAME_SETTING_NUM_ARROW_DEFAULT;
 	data->arrow_speed	  = AR_GAME_SETTING_ARROW_SPEED_DEFAULT;
 	data->meteoroid_speed = AR_GAME_SETTING_METEOROID_SPEED_DEFAULT;
 }
@@ -83,8 +83,8 @@ bool ar_game_setting_read(ar_game_setting_t *data) {
 		return true;
 	}
 
-  ar_game_setting_set_default(data);
-  return false;
+	ar_game_setting_set_default(data);
+	return false;
 }
 
 bool ar_game_setting_write(ar_game_setting_t *data) {

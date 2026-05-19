@@ -98,8 +98,9 @@ void task_polling_create(task_polling_t* task_polling_tbl) {
 void task_post(task_id_t des_task_id, ak_msg_t* msg) {
 	tcb_t* t_tcb;
 
-	if (des_task_id >= task_table_size) {
-		FATAL("TK", 0x02);
+	if (task_table == (task_t*)0 || des_task_id >= task_table_size) {
+		msg_force_free(msg);
+		return;
 	}
 
 	t_tcb = &task_pri_queue[task_table[des_task_id].pri - 1];

@@ -5,8 +5,8 @@
 /*****************************************************************************/
 using namespace std;
 
-#define MAX_BALL_DISPLAY	(16)
-#define BALL_MOVE_STEP		(2)
+#define MAX_BALL_DISPLAY (16)
+#define BALL_MOVE_STEP	 (2)
 
 class ball {
 	// rand from a to b
@@ -18,20 +18,20 @@ public:
 	ball() {
 		axis_x = 1;
 		axis_y = 1;
-		slope = (rand() % (31)) - 15;
+		slope  = (rand() % (31)) - 15;
 		radius = (rand() % (7)) + 6;
-		x = radius + (rand() % (LCD_WIDTH - 2 * radius));
-		y = radius + (rand() % (LCD_HEIGHT - 2 * radius));
+		x	   = radius + (rand() % (LCD_WIDTH - 2 * radius));
+		y	   = radius + (rand() % (LCD_HEIGHT - 2 * radius));
 	}
 
-	int distance(ball& __ball) {
+	int distance(ball &__ball) {
 		uint8_t dx, dy;
 		dx = abs(x - __ball.x);
 		dy = abs(y - __ball.y);
-		return sqrt(dx*dx + dy*dy);
+		return sqrt(dx * dx + dy * dy);
 	}
 
-	bool is_hit_to_other(ball& __ball) {
+	bool is_hit_to_other(ball &__ball) {
 		if ((radius + __ball.radius) <= distance(__ball)) {
 			return true;
 		}
@@ -41,7 +41,7 @@ public:
 	}
 
 	void moving() {
-		if( axis_x > 0) {
+		if (axis_x > 0) {
 			x = x + BALL_MOVE_STEP;
 		}
 		else {
@@ -59,16 +59,18 @@ public:
 			axis_x = -axis_x;
 			if (x < radius) {
 				x = radius;
-			} else if (x > ((LCD_WIDTH - 1) - radius)) {
+			}
+			else if (x > ((LCD_WIDTH - 1) - radius)) {
 				x = (LCD_WIDTH - 1) - radius;
 			}
 		}
 
-		if (y > ((LCD_HEIGHT - 1) - radius) || y < radius ) {
+		if (y > ((LCD_HEIGHT - 1) - radius) || y < radius) {
 			axis_y = -axis_y;
 			if (y < radius) {
 				y = radius;
-			} else if (y > ((LCD_HEIGHT - 1) - radius)) {
+			}
+			else if (y > ((LCD_HEIGHT - 1) - radius)) {
 				y = (LCD_HEIGHT - 1) - radius;
 			}
 		}
@@ -83,7 +85,7 @@ static void view_scr_idle();
 view_dynamic_t dyn_view_idle = {
 	{
 		.item_type = ITEM_TYPE_DYNAMIC,
-	},
+	 },
 	view_scr_idle
 };
 
@@ -97,13 +99,13 @@ view_screen_t scr_idle = {
 
 vector<ball> v_idle_ball;
 int ball::total;
-static screen_f scr_idle_return_handle = scr_menu_game_handle;
-static view_screen_t* scr_idle_return_view = &scr_menu_game;
+static screen_f scr_idle_return_handle	   = scr_menu_game_handle;
+static view_screen_t *scr_idle_return_view = &scr_menu_game;
 
-void scr_idle_set_return_screen(screen_f handle, view_screen_t* screen) {
+void scr_idle_set_return_screen(screen_f handle, view_screen_t *screen) {
 	if (handle != (screen_f)0 && screen != VIEW_SCREEN_NULL) {
 		scr_idle_return_handle = handle;
-		scr_idle_return_view = screen;
+		scr_idle_return_view   = screen;
 	}
 }
 
@@ -113,7 +115,7 @@ static void scr_idle_return_screen() {
 }
 
 void view_scr_idle() {
-	for(ball _ball : v_idle_ball) {
+	for (ball _ball : v_idle_ball) {
 		view_render.drawCircle(_ball.x, _ball.y, _ball.radius, 144);
 	}
 }
@@ -121,7 +123,7 @@ void view_scr_idle() {
 /*****************************************************************************/
 /* Handle - idle */
 /*****************************************************************************/
-void scr_idle_handle(ak_msg_t* msg) {
+void scr_idle_handle(ak_msg_t *msg) {
 	switch (msg->sig) {
 	case SCREEN_ENTRY: {
 		APP_DBG_SIG("SCREEN_ENTRY\n");
@@ -131,14 +133,11 @@ void scr_idle_handle(ak_msg_t* msg) {
 			v_idle_ball.push_back(new_ball);
 		}
 
-		// Remove timer show idle screen 
+		// Remove timer show idle screen
 		timer_remove_attr(AC_TASK_DISPLAY_ID, AC_DISPLAY_SHOW_IDLE);
 
 		// Timer ball moving update
-		timer_set(AC_TASK_DISPLAY_ID, \
-				AC_DISPLAY_SHOW_IDLE_BALL_MOVING_UPDATE, \
-				AC_DISPLAY_SHOW_IDLE_BALL_MOVING_UPDATE_INTERAL, \
-				TIMER_PERIODIC);
+		timer_set(AC_TASK_DISPLAY_ID, AC_DISPLAY_SHOW_IDLE_BALL_MOVING_UPDATE, AC_DISPLAY_SHOW_IDLE_BALL_MOVING_UPDATE_INTERAL, TIMER_PERIODIC);
 	} break;
 
 	case AC_DISPLAY_SHOW_IDLE_BALL_MOVING_UPDATE: {
@@ -158,10 +157,7 @@ void scr_idle_handle(ak_msg_t* msg) {
 		new_ball.id = ball::total++;
 
 		if (v_idle_ball.empty()) {
-			timer_set(AC_TASK_DISPLAY_ID, \
-					AC_DISPLAY_SHOW_IDLE_BALL_MOVING_UPDATE, \
-					AC_DISPLAY_SHOW_IDLE_BALL_MOVING_UPDATE_INTERAL, \
-					TIMER_PERIODIC);
+			timer_set(AC_TASK_DISPLAY_ID, AC_DISPLAY_SHOW_IDLE_BALL_MOVING_UPDATE, AC_DISPLAY_SHOW_IDLE_BALL_MOVING_UPDATE_INTERAL, TIMER_PERIODIC);
 		}
 
 		if (v_idle_ball.size() < MAX_BALL_DISPLAY) {

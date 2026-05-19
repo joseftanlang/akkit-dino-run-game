@@ -11,6 +11,7 @@
 
 #include "app.h"
 #include "app_dbg.h"
+#include "app_eeprom.h"
 #include "task_list.h"
 #include "task_display.h"
 #include "view_render.h"
