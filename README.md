@@ -3,7 +3,9 @@
 ## Dino Game picture
 <table align="center">
   <tr>
-    <td align="center"><img src="resources/dino_game_running.png" alt="Dino game" width="512" height="256"/></td>
+    <td>
+      <img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/84ea721b-96f3-4f1d-8122-1ef66575d201" />
+    </td>
   </tr>
 </table>
 <p align="center"><strong><em>Figure 1:</em></strong> The Dino Game</p>
